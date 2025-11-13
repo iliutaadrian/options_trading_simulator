@@ -11,6 +11,9 @@ An interactive web application for replaying historical stock price data (2019-2
 - **Stock Selection**: Choose from multiple stock symbols (AAPL, META, PLTR) with synthetic data
 - **Multiple Timeframes**: View price data in 1M, 3M, 6M, or 1Y timeframes
 
+<img width="2485" height="1217" alt="Screenshot 2025-11-13 at 2 38 42 PM" src="https://github.com/user-attachments/assets/94c25bf6-30ae-4381-ac44-809dd55144c4" />
+
+
 ### Advanced Chart Display
 - **Multiple Chart Types**:
   - Line chart with gradient fill
@@ -26,6 +29,11 @@ An interactive web application for replaying historical stock price data (2019-2
   - Current RSI value indicator
   - Custom tooltips showing OHLC data
   - Synchronized chart padding for better visibility
+
+<img width="1459" height="963" alt="Screenshot 2025-11-13 at 2 40 56 PM" src="https://github.com/user-attachments/assets/51b5accb-886a-4f24-aa0b-3cd09411d076" />
+
+<img width="1461" height="995" alt="Screenshot 2025-11-13 at 2 41 17 PM" src="https://github.com/user-attachments/assets/2f28e138-b5ba-4e1d-8944-2dc40f9ff731" />
+
 
 ### Options Trading & Greeks
 - **Trading Interface**:
@@ -48,6 +56,9 @@ An interactive web application for replaying historical stock price data (2019-2
   - **Vega**: Sensitivity to volatility changes (per 1% IV change)
   - **IV**: Dynamic implied volatility displayed for each option
 
+<img width="982" height="707" alt="Screenshot 2025-11-13 at 2 39 38 PM" src="https://github.com/user-attachments/assets/079d355a-f8ed-406e-84bb-b2ca79ac1f2b" />
+
+
 ### Advanced Portfolio Management
 - **Position Tracking**: View all open positions with entry and current prices
 - **Session P&L Tracking**:
@@ -59,6 +70,10 @@ An interactive web application for replaying historical stock price data (2019-2
 - **Portfolio Greeks**: Aggregate Greeks for entire portfolio with buy/sell multipliers
 - **Position Management**: Close positions manually at any time
 - **Session Reset**: P&L resets only on page refresh or symbol change
+
+<img width="1173" height="620" alt="Screenshot 2025-11-13 at 2 44 03 PM" src="https://github.com/user-attachments/assets/585d6824-100c-4093-acc8-2f0f1841609c" />
+
+
 
 ## Installation
 
