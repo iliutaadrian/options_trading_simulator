@@ -11,6 +11,8 @@ const OptionsChain = ({
   onTrade
 }) => {
   const [activeTab, setActiveTab] = useState('calls');
+  const [defaultContracts, setDefaultContracts] = useState(10);
+  const [requireConfirmation, setRequireConfirmation] = useState(false);
   const tableContainerRef = useRef(null);
 
   // Auto-scroll to middle of option chain on mount and when strikes change
@@ -64,16 +66,23 @@ const OptionsChain = ({
             type="number"
             min="1"
             max="100"
-            defaultValue="1"
+            value={defaultContracts}
             className="contracts-input"
             id={`contracts-${rowId}`}
+            onChange={(e) => setDefaultContracts(parseInt(e.target.value) || 1)}
             onClick={(e) => e.stopPropagation()}
           />
           <button
             className="trade-btn buy-btn"
             onClick={() => {
-              const contracts = parseInt(document.getElementById(`contracts-${rowId}`).value) || 1;
-              onTrade({ strike, type, action: 'buy', price: data.price, contracts });
+              onTrade({
+                strike,
+                type,
+                action: 'buy',
+                price: data.price,
+                contracts: defaultContracts,
+                requireConfirmation
+              });
             }}
           >
             Buy
@@ -81,8 +90,14 @@ const OptionsChain = ({
           <button
             className="trade-btn sell-btn"
             onClick={() => {
-              const contracts = parseInt(document.getElementById(`contracts-${rowId}`).value) || 1;
-              onTrade({ strike, type, action: 'sell', price: data.price, contracts });
+              onTrade({
+                strike,
+                type,
+                action: 'sell',
+                price: data.price,
+                contracts: defaultContracts,
+                requireConfirmation
+              });
             }}
           >
             Sell
@@ -96,8 +111,8 @@ const OptionsChain = ({
     <div className="options-chain">
       <div className="options-header">
         <h2>Options Chain</h2>
-        <div className="expiration-selector">
-          <label>Expiration:</label>
+        <div className="options-controls">
+          <span>Expiration</span>
           <select value={selectedExpiration} onChange={(e) => onExpirationChange(e.target.value)}>
             {expirations.map(exp => (
               <option key={exp.date} value={exp.date}>
@@ -105,6 +120,31 @@ const OptionsChain = ({
               </option>
             ))}
           </select>
+
+          <span className="chart-type-separator">|</span>
+
+          <span>Default Qty</span>
+          <input
+            type="number"
+            id="default-contracts"
+            min="1"
+            max="100"
+            value={defaultContracts}
+            onChange={(e) => setDefaultContracts(parseInt(e.target.value) || 1)}
+            className="contracts-input"
+          />
+
+          <span className="chart-type-separator">|</span>
+
+          <label htmlFor="require-confirmation" className="confirmation-label">
+            <input
+              type="checkbox"
+              id="require-confirmation"
+              checked={requireConfirmation}
+              onChange={(e) => setRequireConfirmation(e.target.checked)}
+            />
+            Confirmation
+          </label>
         </div>
       </div>
 

@@ -141,20 +141,26 @@ function App() {
 
   // Trading functions
   const handleTradeClick = (tradeData) => {
-    setTradeModalData(tradeData);
+    // If confirmation not required, execute immediately
+    if (!tradeData.requireConfirmation) {
+      handleExecuteTrade(tradeData.contracts, tradeData);
+    } else {
+      setTradeModalData(tradeData);
+    }
   };
 
-  const handleExecuteTrade = (contracts) => {
-    if (!tradeModalData || !currentData) return;
+  const handleExecuteTrade = (contracts, tradeDataOverride = null) => {
+    const tradeData = tradeDataOverride || tradeModalData;
+    if (!tradeData || !currentData) return;
 
     const newPosition = {
       id: Date.now() + Math.random(),
-      type: tradeModalData.type,
-      action: tradeModalData.action,
-      strike: tradeModalData.strike,
+      type: tradeData.type,
+      action: tradeData.action,
+      strike: tradeData.strike,
       expiration: selectedExpiration,
       contracts: contracts,
-      entryPrice: tradeModalData.price,
+      entryPrice: tradeData.price,
       entryDate: currentDate,
       entryStockPrice: currentPrice,
       volatility: currentIV, // Use current IV at time of trade
