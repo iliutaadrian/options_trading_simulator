@@ -29,7 +29,7 @@ function App() {
   const currentDate = currentData?.date || startDate;
   const currentIV = currentData?.iv || 0.35; // Get dynamic IV from current date
 
-  const [strikes, setStrikes] = useState(() => generateStrikePrices(currentPrice, 20));
+  const [strikes, setStrikes] = useState(() => generateStrikePrices(currentPrice, 50));
   const [expirations, setExpirations] = useState(() => generateExpirationDates(currentDate, 6));
   // Default to 30-day expiration (closest to 30 days)
   const [selectedExpiration, setSelectedExpiration] = useState(() => {
