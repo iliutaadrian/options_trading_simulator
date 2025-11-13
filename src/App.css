@@ -277,6 +277,35 @@ body {
   border-color: #3a4562;
 }
 
+.chart-type-separator {
+  color: #2a3552;
+  font-size: 1.2rem;
+  margin: 0 0.5rem;
+}
+
+.chart-type {
+  background: #1e2940;
+  border: 1px solid #2a3552;
+  color: #e0e0e0;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chart-type:hover {
+  border-color: #3a4562;
+  background: #252e45;
+}
+
+.chart-type.active {
+  background: #1e3162;
+  border-color: #2962FF;
+  color: #2962FF;
+  box-shadow: 0 0 8px rgba(41, 98, 255, 0.3);
+}
+
 .chart-price-info {
   display: flex;
   align-items: center;

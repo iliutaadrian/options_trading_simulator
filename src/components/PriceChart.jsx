@@ -3,39 +3,140 @@ import {
   ComposedChart,
   Line,
   Bar,
+  Scatter,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
   ResponsiveContainer,
-  ReferenceLine
+  ReferenceLine,
+  Cell,
+  Layer
 } from 'recharts';
 
 // Custom candlestick component
 const Candlestick = (props) => {
-  const { x, y, width, height, open, close, high, low, fill } = props;
+  const { x, y, width, height, payload, xAxis, yAxis } = props;
+
+  if (!payload || payload.open === undefined || payload.close === undefined || payload.high === undefined || payload.low === undefined) {
+    return null;
+  }
+
+  const { open, close, high, low } = payload;
   const isGreen = close > open;
   const color = isGreen ? '#00ff88' : '#ff4444';
-  const ratio = Math.abs(height / (open - close));
+
+  // Determine scale from yAxis
+  const yMax = yAxis?.domain?.[1] || height;
+  const yMin = yAxis?.domain?.[0] || 0;
+  const yRange = yMax - yMin || 1;
+
+  // Calculate Y positions using yAxis scale
+  const getY = (price) => {
+    if (yAxis && yAxis.scale) {
+      return yAxis.scale(price);
+    }
+    // Fallback calculation
+    return y + height - ((price - yMin) / yRange) * height;
+  };
+
+  const highY = getY(high);
+  const lowY = getY(low);
+  const openY = getY(open);
+  const closeY = getY(close);
+
+  const centerX = x + width / 2;
+  const bodyWidth = Math.max(width * 0.6, 2);
 
   return (
     <g>
+      {/* Wick (High-Low line) */}
       <line
-        x1={x + width / 2}
-        y1={y}
-        x2={x + width / 2}
-        y2={y + height}
+        x1={centerX}
+        y1={highY}
+        x2={centerX}
+        y2={lowY}
         stroke={color}
         strokeWidth={1}
       />
+      {/* Body (Open-Close) */}
       <rect
-        x={x + width * 0.25}
-        y={isGreen ? y + (high - close) * ratio : y + (high - open) * ratio}
-        width={width * 0.5}
-        height={Math.abs((close - open) * ratio)}
+        x={centerX - bodyWidth / 2}
+        y={Math.min(openY, closeY)}
+        width={bodyWidth}
+        height={Math.abs(closeY - openY) || 1}
         fill={color}
         stroke={color}
+        strokeWidth={0.5}
+      />
+    </g>
+  );
+};
+
+// Custom OHLC bar chart component
+const BarShape = (props) => {
+  const { x, y, width, height, payload, xAxis, yAxis } = props;
+
+  if (!payload || payload.open === undefined || payload.close === undefined || payload.high === undefined || payload.low === undefined) {
+    return null;
+  }
+
+  const { open, close, high, low } = payload;
+  const isGreen = close > open;
+  const color = isGreen ? '#00ff88' : '#ff4444';
+
+  // Determine scale from yAxis
+  const yMax = yAxis?.domain?.[1] || height;
+  const yMin = yAxis?.domain?.[0] || 0;
+  const yRange = yMax - yMin || 1;
+
+  const getY = (price) => {
+    if (yAxis && yAxis.scale) {
+      return yAxis.scale(price);
+    }
+    // Fallback calculation
+    return y + height - ((price - yMin) / yRange) * height;
+  };
+
+  const highY = getY(high);
+  const lowY = getY(low);
+  const openY = getY(open);
+  const closeY = getY(close);
+
+  const centerX = x + width / 2;
+  const tickWidth = Math.max(width * 0.3, 3);
+
+  return (
+    <g>
+      {/* Vertical line (High to Low) */}
+      <line
+        x1={centerX}
+        y1={highY}
+        x2={centerX}
+        y2={lowY}
+        stroke={color}
+        strokeWidth={0.5}
+      />
+
+      {/* Left tick (Open) */}
+      <line
+        x1={centerX - tickWidth}
+        y1={openY}
+        x2={centerX}
+        y2={openY}
+        stroke={color}
+        strokeWidth={1}
+      />
+
+      {/* Right tick (Close) */}
+      <line
+        x1={centerX}
+        y1={closeY}
+        x2={centerX + tickWidth}
+        y2={closeY}
+        stroke={color}
+        strokeWidth={1}
       />
     </g>
   );
@@ -61,6 +162,7 @@ const CustomTooltip = ({ active, payload }) => {
 
 const PriceChart = ({ data, currentIndex }) => {
   const [timeframe, setTimeframe] = React.useState('3M');
+  const [chartType, setChartType] = React.useState('bars');
 
   const visibleData = data.slice(0, currentIndex + 1);
   // Calculate days to show based on timeframe
@@ -70,12 +172,21 @@ const PriceChart = ({ data, currentIndex }) => {
     '6M': 180,
     '1Y': 365,
   };
-  
+
   const displayData = visibleData.slice(-daysToShow[timeframe])
 
+  // Calculate volume moving average (20-day)
+  const dataWithVolumeSMA = React.useMemo(() => {
+    return displayData.map((item, idx) => {
+      if (idx < 19) return { ...item, volumeSMA: null };
+      const sum = displayData.slice(idx - 19, idx + 1).reduce((acc, d) => acc + d.volume, 0);
+      return { ...item, volumeSMA: sum / 20 };
+    });
+  }, [displayData]);
+
   // Calculate price change for header
-  const latestData = displayData[displayData.length - 1];
-  const previousData = displayData[displayData.length - 2];
+  const latestData = dataWithVolumeSMA[dataWithVolumeSMA.length - 1];
+  const previousData = dataWithVolumeSMA[dataWithVolumeSMA.length - 2];
   const priceChange = latestData && previousData ? latestData.close - previousData.close : 0;
   const priceChangePercent = previousData ? (priceChange / previousData.close) * 100 : 0;
   const isPositive = priceChange >= 0;
@@ -93,6 +204,8 @@ const PriceChart = ({ data, currentIndex }) => {
                   {isPositive ? '+' : ''}{priceChange.toFixed(2)} ({isPositive ? '+' : ''}{priceChangePercent.toFixed(2)}%)
                 </span>
 
+                <span className="chart-type-separator">|</span>
+
                 Timeframe
                 {['1M', '3M', '6M', '1Y'].map((tf) => (
                   <button
@@ -103,16 +216,33 @@ const PriceChart = ({ data, currentIndex }) => {
                     {tf}
                   </button>
                 ))}
+
+                <span className="chart-type-separator">|</span>
+
+                Chart Type
+                {[
+                  { id: 'line', label: 'Line' },
+                  { id: 'bars', label: 'Bars' },
+                  { id: 'candles', label: 'Candles' }
+                ].map((ct) => (
+                  <button
+                    key={ct.id}
+                    className={`chart-type ${chartType === ct.id ? 'active' : ''}`}
+                    onClick={() => setChartType(ct.id)}
+                  >
+                    {ct.label}
+                  </button>
+                ))}
               </div>
             )}
           </div>
         </div>
         <ResponsiveContainer width="100%" height={450}>
-          <ComposedChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <ComposedChart data={dataWithVolumeSMA} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#2962FF" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#2962FF" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#2962FF" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#2962FF" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e2940" strokeWidth={1} />
@@ -125,6 +255,7 @@ const PriceChart = ({ data, currentIndex }) => {
                 return `${date.getMonth() + 1}/${date.getDate()}`;
               }}
               tickLine={false}
+              padding={{ left: 10, right: 20 }}
             />
             <YAxis
               yAxisId="price"
@@ -134,19 +265,45 @@ const PriceChart = ({ data, currentIndex }) => {
               tickFormatter={(value) => `$${value.toFixed(0)}`}
               tickLine={false}
               orientation="right"
+              padding={{ top: 10, bottom: 10 }}
             />
-            <ReferenceLine 
+            <ReferenceLine
               yAxisId="price"
-              y={latestData?.close} 
-              stroke="#2962FF" 
+              y={latestData?.close}
+              stroke="#2962FF"
               strokeWidth={1}
               strokeDasharray="5 5"
-              label={{ 
-                value: `$${latestData?.close.toFixed(2)}`, 
-                fill: '#2962FF', 
-                fontSize: 15,
+              label={{
+                value: `$${latestData?.close.toFixed(2)}`,
+                fill: '#FFFFFF',
+                fontSize: 13,
                 fontWeight: 'bold',
-                position: 'right' 
+                position: 'right',
+                content: (props) => {
+                  const { viewBox, value } = props;
+                  return (
+                    <g>
+                      <rect
+                        x={viewBox.width + viewBox.x + 5}
+                        y={viewBox.y - 12}
+                        width={50}
+                        height={24}
+                        fill="#2962FF"
+                        rx={4}
+                      />
+                      <text
+                        x={viewBox.width + viewBox.x + 30}
+                        y={viewBox.y + 4}
+                        fill="#FFFFFF"
+                        fontSize={13}
+                        fontWeight="bold"
+                        textAnchor="middle"
+                      >
+                        {value}
+                      </text>
+                    </g>
+                  );
+                }
               }}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#4a5568', strokeWidth: 1, strokeDasharray: '5 5' }} />
@@ -196,17 +353,146 @@ const PriceChart = ({ data, currentIndex }) => {
               name="MA(200)"
             />
 
-            {/* Price line with area */}
-            <Line
-              yAxisId="price"
-              type="monotone"
-              dataKey="close"
-              stroke="#2962FF"
-              dot={false}
-              strokeWidth={2.5}
-              name="Price"
-              fill="url(#priceGradient)"
-            />
+            {/* Chart Type: Line */}
+            {chartType === 'line' && (
+              <Line
+                yAxisId="price"
+                type="monotone"
+                dataKey="close"
+                stroke="#2962FF"
+                dot={false}
+                strokeWidth={2.5}
+                name="Price"
+                fill="url(#priceGradient)"
+              />
+            )}
+
+            {/* Chart Type: Bars */}
+            {chartType === 'bars' && (
+              <Scatter
+                yAxisId="price"
+                data={dataWithVolumeSMA}
+                dataKey="close"
+                fill="transparent"
+                isAnimationActive={false}
+                shape={(props) => {
+                  const { cx, cy, payload, xAxis, yAxis } = props;
+
+                  if (!payload || !cx || !yAxis) return null;
+
+                  const { open, close, high, low } = payload;
+                  if (open === undefined || close === undefined || high === undefined || low === undefined) {
+                    return null;
+                  }
+
+                  const isGreen = close > open;
+                  const color = isGreen ? '#00ff88' : '#ff4444';
+
+                  // Get Y positions using the yAxis scale
+                  const highY = yAxis.scale(high);
+                  const lowY = yAxis.scale(low);
+                  const openY = yAxis.scale(open);
+                  const closeY = yAxis.scale(close);
+
+                  // Calculate bar width based on data density
+                  const chartWidth = xAxis?.width || 800;
+                  const dataPoints = dataWithVolumeSMA.length;
+                  const barWidth = Math.max((chartWidth / dataPoints) * 0.6, 2);
+                  const tickWidth = Math.max(barWidth * 0.5, 3);
+
+                  return (
+                    <g>
+                      {/* Vertical line (High to Low) */}
+                      <line
+                        x1={cx}
+                        y1={highY}
+                        x2={cx}
+                        y2={lowY}
+                        stroke={color}
+                        strokeWidth={1.5}
+                      />
+                      {/* Left tick (Open) */}
+                      <line
+                        x1={cx - tickWidth}
+                        y1={openY}
+                        x2={cx}
+                        y2={openY}
+                        stroke={color}
+                        strokeWidth={2}
+                      />
+                      {/* Right tick (Close) */}
+                      <line
+                        x1={cx}
+                        y1={closeY}
+                        x2={cx + tickWidth}
+                        y2={closeY}
+                        stroke={color}
+                        strokeWidth={2}
+                      />
+                    </g>
+                  );
+                }}
+              />
+            )}
+
+            {/* Chart Type: Candles */}
+            {chartType === 'candles' && (
+              <Scatter
+                yAxisId="price"
+                data={dataWithVolumeSMA}
+                dataKey="close"
+                fill="transparent"
+                isAnimationActive={false}
+                shape={(props) => {
+                  const { cx, cy, payload, xAxis, yAxis } = props;
+
+                  if (!payload || !cx || !yAxis) return null;
+
+                  const { open, close, high, low } = payload;
+                  if (open === undefined || close === undefined || high === undefined || low === undefined) {
+                    return null;
+                  }
+
+                  const isGreen = close > open;
+                  const color = isGreen ? '#00ff88' : '#ff4444';
+
+                  // Get Y positions using the yAxis scale
+                  const highY = yAxis.scale(high);
+                  const lowY = yAxis.scale(low);
+                  const openY = yAxis.scale(open);
+                  const closeY = yAxis.scale(close);
+
+                  // Calculate candle width based on data density
+                  const chartWidth = xAxis?.width || 800;
+                  const dataPoints = dataWithVolumeSMA.length;
+                  const candleWidth = Math.max((chartWidth / dataPoints) * 0.7, 3);
+
+                  return (
+                    <g>
+                      {/* Wick (High-Low line) */}
+                      <line
+                        x1={cx}
+                        y1={highY}
+                        x2={cx}
+                        y2={lowY}
+                        stroke={color}
+                        strokeWidth={1.5}
+                      />
+                      {/* Body (Open-Close rect) */}
+                      <rect
+                        x={cx - candleWidth / 2}
+                        y={Math.min(openY, closeY)}
+                        width={candleWidth}
+                        height={Math.abs(closeY - openY) || 1}
+                        fill={color}
+                        stroke={color}
+                        strokeWidth={1}
+                      />
+                    </g>
+                  );
+                }}
+              />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -216,7 +502,7 @@ const PriceChart = ({ data, currentIndex }) => {
           <h3>Volume</h3>
         </div>
         <ResponsiveContainer width="100%" height={120}>
-          <ComposedChart data={displayData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+          <ComposedChart data={dataWithVolumeSMA} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e2940" strokeWidth={1} />
             <XAxis
               dataKey="date"
@@ -227,6 +513,7 @@ const PriceChart = ({ data, currentIndex }) => {
                 return `${date.getMonth() + 1}/${date.getDate()}`;
               }}
               tickLine={false}
+              padding={{ left: 10, right: 20 }}
             />
             <YAxis
               tick={{ fill: '#6B7785', fontSize: 11 }}
@@ -234,9 +521,18 @@ const PriceChart = ({ data, currentIndex }) => {
               tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`}
               tickLine={false}
               orientation="right"
+              padding={{ top: 10, bottom: 10 }}
             />
             <Tooltip cursor={{ fill: 'rgba(42, 53, 82, 0.3)' }} />
             <Bar dataKey="volume" fill="#2962FF" opacity={0.6} />
+            <Line
+              type="monotone"
+              dataKey="volumeSMA"
+              stroke="#FF9800"
+              dot={false}
+              strokeWidth={2}
+              name="Volume MA(20)"
+            />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -246,7 +542,7 @@ const PriceChart = ({ data, currentIndex }) => {
           <h3>RSI (14)</h3>
         </div>
         <ResponsiveContainer width="100%" height={120}>
-          <ComposedChart data={displayData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+          <ComposedChart data={dataWithVolumeSMA} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e2940" strokeWidth={1} />
             <XAxis
               dataKey="date"
@@ -257,6 +553,7 @@ const PriceChart = ({ data, currentIndex }) => {
                 return `${date.getMonth() + 1}/${date.getDate()}`;
               }}
               tickLine={false}
+              padding={{ left: 10, right: 20 }}
             />
             <YAxis
               domain={[0, 100]}
@@ -264,6 +561,45 @@ const PriceChart = ({ data, currentIndex }) => {
               stroke="#1e2940"
               tickLine={false}
               orientation="right"
+              padding={{ top: 10, bottom: 10 }}
+            />
+            <ReferenceLine
+              y={latestData?.rsi}
+              stroke="#9C27B0"
+              strokeWidth={1}
+              strokeDasharray="5 5"
+              label={{
+                value: `${latestData?.rsi?.toFixed(2) || ''}`,
+                fill: '#FFFFFF',
+                fontSize: 12,
+                fontWeight: 'bold',
+                position: 'right',
+                content: (props) => {
+                  const { viewBox, value } = props;
+                  return (
+                    <g>
+                      <rect
+                        x={viewBox.width + viewBox.x + 5}
+                        y={viewBox.y - 10}
+                        width={40}
+                        height={20}
+                        fill="#9C27B0"
+                        rx={4}
+                      />
+                      <text
+                        x={viewBox.width + viewBox.x + 25}
+                        y={viewBox.y + 4}
+                        fill="#FFFFFF"
+                        fontSize={12}
+                        fontWeight="bold"
+                        textAnchor="middle"
+                      >
+                        {value}
+                      </text>
+                    </g>
+                  );
+                }
+              }}
             />
             <Tooltip cursor={{ stroke: '#4a5568', strokeWidth: 1, strokeDasharray: '5 5' }} />
             <ReferenceLine y={70} stroke="#F23645" strokeDasharray="3 3" strokeWidth={1} opacity={0.5} />
