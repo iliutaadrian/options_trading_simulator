@@ -16,8 +16,8 @@ function App() {
   const [rawData, setRawData] = useState(() => generateHistoricalData(symbol, startDate, endDate));
   const [priceData, setPriceData] = useState(() => addIndicatorsToData(rawData));
 
-  // Time navigation - Start at day 250 to show 200-day moving average with history
-  const [currentIndex, setCurrentIndex] = useState(250);
+  // Time navigation - Start at day 350 to show 200-day moving average with history
+  const [currentIndex, setCurrentIndex] = useState(350);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1000); // milliseconds per day
   const playbackTimerRef = useRef(null);
@@ -68,13 +68,13 @@ function App() {
     const newPriceData = addIndicatorsToData(newRawData);
     setRawData(newRawData);
     setPriceData(newPriceData);
-    setCurrentIndex(250); // Reset to day 250
+    setCurrentIndex(350); // Reset to day 350
     setIsPlaying(false);
 
     // Update strikes and expirations based on new data
-    const newCurrentPrice = newPriceData[250]?.close || 150;
+    const newCurrentPrice = newPriceData[350]?.close || 150;
     setStrikes(generateStrikePrices(newCurrentPrice, 20));
-    const newExpirations = generateExpirationDates(newPriceData[250]?.date || startDate, 6);
+    const newExpirations = generateExpirationDates(newPriceData[350]?.date || startDate, 6);
     setExpirations(newExpirations);
 
     // Default to 30-day expiration
@@ -174,11 +174,11 @@ function App() {
       <header className="app-header">
         <h1>Options Trading Simulator</h1>
         <div className="stock-selector">
-          <label>Stock:</label>
+          <label>Mock Stock:</label>
           <select value={symbol} onChange={(e) => handleSymbolChange(e.target.value)}>
             <option value="AAPL">Apple (AAPL)</option>
             <option value="META">Meta (META)</option>
-            <option value="GOOGL">Google (GOOGL)</option>
+            <option value="PLTR">Palantir (PLTR)</option>
           </select>
         </div>
         <div className="stock-info">

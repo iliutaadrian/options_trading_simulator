@@ -261,6 +261,22 @@ body {
   font-weight: 500;
 }
 
+.timeframe {
+  background: #1e2940;
+  border: 1px solid #2a3552;
+  color: #e0e0e0;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.timeframe.active {
+  background: #1e3162;
+  border-color: #3a4562;
+}
+
 .chart-price-info {
   display: flex;
   align-items: center;

@@ -1,11 +1,11 @@
 // Stock-specific parameters based on realistic historical patterns (2019-2025)
 const STOCK_PARAMS = {
   AAPL: {
-    startPrice: 39.48,      // AAPL price in early 2019 (split-adjusted)
-    endPrice: 230.00,       // Approximate 2025 price
-    volatility: 0.022,      // Daily price volatility
+    startPrice: 120.68,      // AAPL price in early 2019 (split-adjusted)
+    endPrice: 285.00,       // Approximate 2025 price
+    volatility: 0.03,      // Daily price volatility
     drift: 0.0012,
-    baseIV: 0.35,           // Base implied volatility (35%) - increased for better premiums
+    baseIV: 0.40,           // Base implied volatility (35%) - increased for better premiums
     volume: { min: 40000000, max: 120000000 },
     events: [
       { date: '2020-03-15', drop: 0.25, ivSpike: 0.80 },    // COVID crash - IV spike to 80%
@@ -16,8 +16,8 @@ const STOCK_PARAMS = {
   },
   META: {
     startPrice: 165.00,     // META (FB) price in early 2019
-    endPrice: 520.00,       // Approximate 2025 price
-    volatility: 0.025,      // Daily price volatility
+    endPrice: 750.00,       // Approximate 2025 price
+    volatility: 0.035,      // Daily price volatility
     drift: 0.0008,
     baseIV: 0.42,           // Base implied volatility (42%) - increased for better premiums
     volume: { min: 15000000, max: 45000000 },
@@ -29,12 +29,12 @@ const STOCK_PARAMS = {
       { date: '2024-04-01', jump: 0.12, ivSpike: 0.48 }     // Strong earnings
     ]
   },
-  GOOGL: {
-    startPrice: 54.18,      // GOOGL price in early 2019 (split-adjusted)
-    endPrice: 175.00,       // Approximate 2025 price
-    volatility: 0.020,      // Daily price volatility
+  PLTR: {
+    startPrice: 100.00,      // GOOGL price in early 2019 (split-adjusted)
+    endPrice: 200.00,       // Approximate 2025 price
+    volatility: 0.04,      // Daily price volatility
     drift: 0.0007,
-    baseIV: 0.32,           // Base implied volatility (32%) - increased for better premiums
+    baseIV: 0.80,           // Base implied volatility (32%) - increased for better premiums
     volume: { min: 20000000, max: 60000000 },
     events: [
       { date: '2020-03-15', drop: 0.28, ivSpike: 0.75 },    // COVID crash
@@ -181,7 +181,7 @@ export function generateHistoricalData(symbol, startDate, endDate, basePrice = n
 export function generateStrikePrices(currentPrice, count = 10) {
   const strikes = [];
   const baseStrike = Math.round(currentPrice / 5) * 5; // Round to nearest $5
-  const step = 5;
+  const step = 1;
 
   for (let i = -count/2; i <= count/2; i++) {
     strikes.push(baseStrike + (i * step));

@@ -60,8 +60,18 @@ const CustomTooltip = ({ active, payload }) => {
 };
 
 const PriceChart = ({ data, currentIndex }) => {
+  const [timeframe, setTimeframe] = React.useState('3M');
+
   const visibleData = data.slice(0, currentIndex + 1);
-  const displayData = visibleData.slice(-150); // Show last 150 days for better context
+  // Calculate days to show based on timeframe
+  const daysToShow = {
+    '1M': 30,
+    '3M': 90,
+    '6M': 180,
+    '1Y': 365,
+  };
+  
+  const displayData = visibleData.slice(-daysToShow[timeframe])
 
   // Calculate price change for header
   const latestData = displayData[displayData.length - 1];
@@ -82,6 +92,17 @@ const PriceChart = ({ data, currentIndex }) => {
                 <span className={`price-change ${isPositive ? 'positive' : 'negative'}`}>
                   {isPositive ? '+' : ''}{priceChange.toFixed(2)} ({isPositive ? '+' : ''}{priceChangePercent.toFixed(2)}%)
                 </span>
+
+                Timeframe
+                {['1M', '3M', '6M', '1Y'].map((tf) => (
+                  <button
+                    key={tf}
+                    className={`timeframe ${timeframe === tf ? 'active' : ''}`}
+                    onClick={() => setTimeframe(tf)}
+                  >
+                    {tf}
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -113,6 +134,20 @@ const PriceChart = ({ data, currentIndex }) => {
               tickFormatter={(value) => `$${value.toFixed(0)}`}
               tickLine={false}
               orientation="right"
+            />
+            <ReferenceLine 
+              yAxisId="price"
+              y={latestData?.close} 
+              stroke="#2962FF" 
+              strokeWidth={1}
+              strokeDasharray="5 5"
+              label={{ 
+                value: `$${latestData?.close.toFixed(2)}`, 
+                fill: '#2962FF', 
+                fontSize: 15,
+                fontWeight: 'bold',
+                position: 'right' 
+              }}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#4a5568', strokeWidth: 1, strokeDasharray: '5 5' }} />
 
