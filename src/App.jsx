@@ -29,7 +29,7 @@ function App() {
   const currentDate = currentData?.date || startDate;
   const currentIV = currentData?.iv || 0.35; // Get dynamic IV from current date
 
-  const [strikes, setStrikes] = useState(() => generateStrikePrices(currentPrice, 50));
+  const [strikes, setStrikes] = useState(() => generateStrikePrices(currentPrice, 100));
   const [expirations, setExpirations] = useState(() => generateExpirationDates(currentDate, 6));
   // Default to 30-day expiration (closest to 30 days)
   const [selectedExpiration, setSelectedExpiration] = useState(() => {
@@ -58,7 +58,7 @@ function App() {
     const currentStrikeCenter = strikes[Math.floor(strikes.length / 2)];
     const priceDiff = Math.abs(currentPrice - currentStrikeCenter);
     if (priceDiff > currentPrice * 0.15) { // Update if price moved >15%
-      setStrikes(generateStrikePrices(currentPrice, 20));
+      setStrikes(generateStrikePrices(currentPrice, 100));
     }
   }, [currentPrice]);
 
@@ -74,7 +74,7 @@ function App() {
 
     // Update strikes and expirations based on new data
     const newCurrentPrice = newPriceData[350]?.close || 150;
-    setStrikes(generateStrikePrices(newCurrentPrice, 20));
+    setStrikes(generateStrikePrices(newCurrentPrice, 100));
     const newExpirations = generateExpirationDates(newPriceData[350]?.date || startDate, 6);
     setExpirations(newExpirations);
 
@@ -136,19 +136,48 @@ function App() {
     });
   }, [currentDate, positions.length]);
 
-  // Keyboard shortcut: Space to play/pause
+  // Keyboard shortcuts: Space to play/pause, Arrow keys for navigation and speed
   useEffect(() => {
     const handleKeyPress = (e) => {
-      // Only trigger if space is pressed and not in an input field
-      if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      // Only trigger if not in an input field
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+        return;
+      }
+
+      if (e.code === 'Space') {
         e.preventDefault();
         setIsPlaying(prev => !prev);
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        handleStepForward();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        handleStepBackward();
+      } else if (e.code === 'ArrowDown') {
+        e.preventDefault();
+        // Increase speed (decrease delay): 2000 -> 1000 -> 500 -> 250 -> 100
+        const speedLevels = [2000, 1000, 500, 250, 100];
+        const currentSpeedIndex = speedLevels.indexOf(playbackSpeed);
+        if (currentSpeedIndex > 0) {
+          setPlaybackSpeed(speedLevels[currentSpeedIndex - 1]);
+        }
+      } else if (e.code === 'ArrowUp') {
+        e.preventDefault();
+        // Decrease speed (increase delay): 100 -> 250 -> 500 -> 1000 -> 2000
+        const speedLevels = [2000, 1000, 500, 250, 100];
+        const currentSpeedIndex = speedLevels.indexOf(playbackSpeed);
+        if (currentSpeedIndex < speedLevels.length - 1 && currentSpeedIndex !== -1) {
+          setPlaybackSpeed(speedLevels[currentSpeedIndex + 1]);
+        } else if (currentSpeedIndex === -1) {
+          // If not in standard levels, find closest
+          setPlaybackSpeed(1000);
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
+  }, [playbackSpeed]);
 
   const handlePlay = () => setIsPlaying(true);
   const handlePause = () => setIsPlaying(false);
@@ -170,6 +199,9 @@ function App() {
     setIsPlaying(false);
   };
 
+  const handleSpeedIncrease = () => {
+    setPlaybackSpeed(prev => prev + 1);
+  };
   const handleSpeedChange = (speed) => {
     setPlaybackSpeed(speed);
   };

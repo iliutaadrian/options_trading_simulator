@@ -490,8 +490,48 @@ body {
   background: transparent;
 }
 
+.chain-table tr.atm {
+  background: transparent;
+}
+
 .chain-table tr:hover {
   background: rgba(0, 212, 255, 0.1);
+}
+
+.chain-table tr.section-divider {
+  background: transparent;
+  border: none;
+  height: 2px;
+}
+
+.chain-table tr.section-divider td {
+  padding: 0.5rem 0;
+}
+
+.chain-table tr.section-divider:hover {
+  background: transparent;
+}
+
+.divider-line {
+  position: relative;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ffaa00, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.divider-label {
+  position: absolute;
+  background: #0f1628;
+  padding: 0.25rem 0.75rem;
+  color: #ffaa00;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  border: 1px solid #ffaa00;
+  border-radius: 3px;
 }
 
 .strike-cell {
