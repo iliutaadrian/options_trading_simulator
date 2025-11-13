@@ -5,6 +5,7 @@ import OptionsChain from './components/OptionsChain';
 import Portfolio from './components/Portfolio';
 import { generateHistoricalData, generateStrikePrices, generateExpirationDates } from './utils/dataGenerator';
 import { addIndicatorsToData } from './utils/technicalIndicators';
+import { calculateOptionPnL } from './utils/blackScholes';
 
 function App() {
   // Stock and date settings - Data from 2019 to 2025
@@ -84,10 +85,12 @@ function App() {
     setSelectedExpiration(thirtyDayExp?.date);
 
     setPositions([]); // Clear positions when switching stocks
+    setClosedPositions([]); // Clear closed positions history
   };
 
   // Trading state
   const [positions, setPositions] = useState([]);
+  const [closedPositions, setClosedPositions] = useState([]);
   const [tradeModalData, setTradeModalData] = useState(null);
 
   // Playback control
@@ -114,6 +117,38 @@ function App() {
       }
     };
   }, [isPlaying, playbackSpeed, priceData.length]);
+
+  // Auto-expire positions that reach expiration date
+  useEffect(() => {
+    if (positions.length === 0) return;
+
+    const currentDateObj = new Date(currentDate);
+
+    // Check each position for expiration
+    positions.forEach((position, index) => {
+      const expiryDate = new Date(position.expiration);
+
+      // If current date is on or after expiration, auto-close position
+      if (currentDateObj >= expiryDate) {
+        // Use setTimeout to avoid state update during render
+        setTimeout(() => handleClosePosition(index), 0);
+      }
+    });
+  }, [currentDate, positions.length]);
+
+  // Keyboard shortcut: Space to play/pause
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      // Only trigger if space is pressed and not in an input field
+      if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        setIsPlaying(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
 
   const handlePlay = () => setIsPlaying(true);
   const handlePause = () => setIsPlaying(false);
@@ -172,6 +207,29 @@ function App() {
   };
 
   const handleClosePosition = (index) => {
+    const positionToClose = positions[index];
+    if (!positionToClose) return;
+
+    // Calculate final P&L at closing
+    const expiryDate = new Date(positionToClose.expiration);
+    const currentDateObj = new Date(currentDate);
+    const daysToExpiry = Math.max(0, Math.floor((expiryDate - currentDateObj) / (1000 * 60 * 60 * 24)));
+
+    const metrics = calculateOptionPnL(
+      { ...positionToClose, daysToExpiry, volatility: currentIV },
+      currentPrice,
+      currentDate
+    );
+
+    // Store closed position with realized P&L
+    const closedPosition = {
+      ...positionToClose,
+      closedDate: currentDate,
+      closedPrice: metrics.currentPrice,
+      realizedPnL: metrics.pnl
+    };
+
+    setClosedPositions(prev => [...prev, closedPosition]);
     setPositions(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -232,6 +290,7 @@ function App() {
         currentDate={currentDate}
         currentIV={currentIV}
         onClosePosition={handleClosePosition}
+        closedPositions={closedPositions}
       />
 
       {/* Trade Modal */}

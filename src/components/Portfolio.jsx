@@ -1,7 +1,7 @@
 import React from 'react';
 import { calculateOptionPnL } from '../utils/blackScholes';
 
-const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePosition }) => {
+const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePosition, closedPositions = [] }) => {
   // Calculate current values and P&L for all positions
   const positionMetrics = positions.map((position, index) => {
     const expiryDate = new Date(position.expiration);
@@ -23,9 +23,13 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
     };
   });
 
+  // Calculate realized P&L from closed positions
+  const realizedPnL = closedPositions.reduce((sum, p) => sum + p.realizedPnL, 0);
+
   // Calculate portfolio totals
   const totalValue = positionMetrics.reduce((sum, p) => sum + p.currentValue, 0);
-  const totalPnL = positionMetrics.reduce((sum, p) => sum + p.pnl, 0);
+  const unrealizedPnL = positionMetrics.reduce((sum, p) => sum + p.pnl, 0);
+  const totalPnL = unrealizedPnL + realizedPnL;
   const totalInvested = positionMetrics.reduce((sum, p) =>
     sum + (p.entryPrice * p.contracts * 100), 0
   );
@@ -51,19 +55,21 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
           <p className="big-number">${totalValue.toFixed(2)}</p>
         </div>
         <div className="summary-card">
-          <h4>Total P&L</h4>
+          <h4>Total P&L (Session)</h4>
           <p className={`big-number ${totalPnL >= 0 ? 'profit' : 'loss'}`}>
             ${totalPnL.toFixed(2)}
-            {totalInvested > 0 && (
-              <span className="pnl-percent">
-                ({((totalPnL / totalInvested) * 100).toFixed(2)}%)
-              </span>
-            )}
           </p>
+          <div style={{ fontSize: '0.85rem', marginTop: '0.5rem', color: '#888' }}>
+            <div>Unrealized: ${unrealizedPnL.toFixed(2)}</div>
+            <div>Realized: ${realizedPnL.toFixed(2)}</div>
+          </div>
         </div>
         <div className="summary-card">
           <h4>Positions</h4>
           <p className="big-number">{positions.length}</p>
+          <div style={{ fontSize: '0.85rem', marginTop: '0.5rem', color: '#888' }}>
+            Closed: {closedPositions.length}
+          </div>
         </div>
       </div>
 
