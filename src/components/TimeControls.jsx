@@ -59,11 +59,10 @@ const TimeControls = ({
         <div className="speed-controls">
           <label>Speed:</label>
           <select value={playbackSpeed} onChange={(e) => onSpeedChange(Number(e.target.value))}>
-            <option value={2000}>0.5x</option>
-            <option value={1000}>1x</option>
-            <option value={500}>2x</option>
-            <option value={250}>4x</option>
-            <option value={100}>10x</option>
+            <option value={7500}>0.5x</option>
+            <option value={5000}>1x</option>
+            <option value={2500}>2x</option>
+            <option value={1000}>4x</option>
           </select>
         </div>
       </div>

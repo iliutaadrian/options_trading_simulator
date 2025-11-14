@@ -9,7 +9,7 @@ import { calculateOptionPnL } from './utils/blackScholes';
 
 function App() {
   // Stock and date settings - Data from 2019 to 2025
-  const [symbol, setSymbol] = useState('AAPL');
+  const [symbol, setSymbol] = useState('mock_1');
   const startDate = '2019-01-01';
   const endDate = '2025-11-11';
 
@@ -20,7 +20,7 @@ function App() {
   // Time navigation - Start at day 350 to show 200-day moving average with history
   const [currentIndex, setCurrentIndex] = useState(350);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1000); // milliseconds per day
+  const [playbackSpeed, setPlaybackSpeed] = useState(5000); // milliseconds per day
   const playbackTimerRef = useRef(null);
 
   // Options data
@@ -46,8 +46,8 @@ function App() {
       if (!newExpirations.find(exp => exp.date === selectedExpiration)) {
         // Select 30-day expiration or closest
         const thirtyDayExp = newExpirations.find(exp => exp.isDefault) ||
-                            newExpirations.find(exp => exp.daysToExpiry >= 25 && exp.daysToExpiry <= 35) ||
-                            newExpirations[2];
+          newExpirations.find(exp => exp.daysToExpiry >= 25 && exp.daysToExpiry <= 35) ||
+          newExpirations[2];
         setSelectedExpiration(thirtyDayExp?.date);
       }
     }
@@ -80,8 +80,8 @@ function App() {
 
     // Default to 30-day expiration
     const thirtyDayExp = newExpirations.find(exp => exp.isDefault) ||
-                        newExpirations.find(exp => exp.daysToExpiry >= 25 && exp.daysToExpiry <= 35) ||
-                        newExpirations[2];
+      newExpirations.find(exp => exp.daysToExpiry >= 25 && exp.daysToExpiry <= 35) ||
+      newExpirations[2];
     setSelectedExpiration(thirtyDayExp?.date);
 
     setPositions([]); // Clear positions when switching stocks
@@ -155,22 +155,19 @@ function App() {
         handleStepBackward();
       } else if (e.code === 'ArrowDown') {
         e.preventDefault();
-        // Increase speed (decrease delay): 2000 -> 1000 -> 500 -> 250 -> 100
-        const speedLevels = [2000, 1000, 500, 250, 100];
+        const speedLevels = [7500, 5000, 2500, 1000];
         const currentSpeedIndex = speedLevels.indexOf(playbackSpeed);
         if (currentSpeedIndex > 0) {
           setPlaybackSpeed(speedLevels[currentSpeedIndex - 1]);
         }
       } else if (e.code === 'ArrowUp') {
         e.preventDefault();
-        // Decrease speed (increase delay): 100 -> 250 -> 500 -> 1000 -> 2000
-        const speedLevels = [2000, 1000, 500, 250, 100];
+        const speedLevels = [7500, 5000, 2500, 1000];
         const currentSpeedIndex = speedLevels.indexOf(playbackSpeed);
         if (currentSpeedIndex < speedLevels.length - 1 && currentSpeedIndex !== -1) {
           setPlaybackSpeed(speedLevels[currentSpeedIndex + 1]);
         } else if (currentSpeedIndex === -1) {
-          // If not in standard levels, find closest
-          setPlaybackSpeed(1000);
+          setPlaybackSpeed(5000);
         }
       }
     };
@@ -270,15 +267,15 @@ function App() {
       <header className="app-header">
         <h1>Options Trading Simulator</h1>
         <div className="stock-selector">
-          <label>Mock Stock:</label>
+          <label>Stock:</label>
           <select value={symbol} onChange={(e) => handleSymbolChange(e.target.value)}>
-            <option value="AAPL">Apple (AAPL)</option>
-            <option value="META">Meta (META)</option>
-            <option value="PLTR">Palantir (PLTR)</option>
+            <option value="mock_1">120-300 IV 50%</option>
+            <option value="mock_2">165-750 IV 42</option>
+            <option value="mock_3">100-200 IV 80%</option>
           </select>
         </div>
         <div className="stock-info">
-          <span className="symbol">{symbol}</span>
+          <span className="symbol">{symbol.match(/mock_\d+/) ? '' : symbol}</span>
           <span className="price">${currentPrice.toFixed(2)}</span>
           <span className="date">{currentDate}</span>
         </div>

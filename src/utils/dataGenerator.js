@@ -1,47 +1,47 @@
 // Stock-specific parameters based on realistic historical patterns (2019-2025)
 const STOCK_PARAMS = {
-  AAPL: {
-    startPrice: 120.68,      // AAPL price in early 2019 (split-adjusted)
-    endPrice: 285.00,       // Approximate 2025 price
-    volatility: 0.03,      // Daily price volatility
+  mock_1: {
+    startPrice: 120,      
+    endPrice: 300,       
+    volatility: 0.03,      
     drift: 0.0012,
-    baseIV: 0.40,           // Base implied volatility (35%) - increased for better premiums
+    baseIV: 0.40,           
     volume: { min: 40000000, max: 120000000 },
     events: [
-      { date: '2020-03-15', drop: 0.25, ivSpike: 0.80 },    // COVID crash - IV spike to 80%
-      { date: '2020-08-31', jump: 0.12, ivSpike: 0.50 },    // Stock split announcement
-      { date: '2022-01-03', drop: 0.20, ivSpike: 0.60 },    // 2022 tech selloff
-      { date: '2023-07-01', jump: 0.15, ivSpike: 0.45 }     // AI rally
+      { date: '2020-03-15', drop: 0.25, ivSpike: 0.80 },    
+      { date: '2020-08-31', jump: 0.12, ivSpike: 0.50 },    
+      { date: '2022-01-03', drop: 0.20, ivSpike: 0.60 },    
+      { date: '2023-07-01', jump: 0.15, ivSpike: 0.45 }     
     ]
   },
-  META: {
-    startPrice: 165.00,     // META (FB) price in early 2019
-    endPrice: 750.00,       // Approximate 2025 price
-    volatility: 0.035,      // Daily price volatility
+  mock_2: {
+    startPrice: 165.00,     
+    endPrice: 750.00,       
+    volatility: 0.035,      
     drift: 0.0008,
-    baseIV: 0.42,           // Base implied volatility (42%) - increased for better premiums
+    baseIV: 0.42,           
     volume: { min: 15000000, max: 45000000 },
     events: [
-      { date: '2020-03-15', drop: 0.30, ivSpike: 0.85 },    // COVID crash
-      { date: '2021-09-01', jump: 0.18, ivSpike: 0.50 },    // Post-pandemic high
-      { date: '2022-02-03', drop: 0.26, ivSpike: 0.70 },    // Metaverse concerns
-      { date: '2023-02-01', jump: 0.23, ivSpike: 0.55 },    // Cost cutting + AI
-      { date: '2024-04-01', jump: 0.12, ivSpike: 0.48 }     // Strong earnings
+      { date: '2020-03-15', drop: 0.30, ivSpike: 0.85 },    
+      { date: '2021-09-01', jump: 0.18, ivSpike: 0.50 },    
+      { date: '2022-02-03', drop: 0.26, ivSpike: 0.70 },    
+      { date: '2023-02-01', jump: 0.23, ivSpike: 0.55 },    
+      { date: '2024-04-01', jump: 0.12, ivSpike: 0.48 }     
     ]
   },
-  PLTR: {
-    startPrice: 100.00,      // GOOGL price in early 2019 (split-adjusted)
-    endPrice: 200.00,       // Approximate 2025 price
-    volatility: 0.04,      // Daily price volatility
+  mock_3: {
+    startPrice: 100.00,      
+    endPrice: 200.00,       
+    volatility: 0.04,      
     drift: 0.0007,
-    baseIV: 0.80,           // Base implied volatility (32%) - increased for better premiums
+    baseIV: 0.80,           
     volume: { min: 20000000, max: 60000000 },
     events: [
-      { date: '2020-03-15', drop: 0.28, ivSpike: 0.75 },    // COVID crash
-      { date: '2021-02-01', jump: 0.15, ivSpike: 0.40 },    // Ad revenue surge
-      { date: '2022-04-26', drop: 0.18, ivSpike: 0.52 },    // Growth concerns
-      { date: '2023-02-08', jump: 0.10, ivSpike: 0.38 },    // Bard/AI announcements
-      { date: '2024-01-01', jump: 0.12, ivSpike: 0.35 }     // Cloud growth
+      { date: '2020-03-15', drop: 0.28, ivSpike: 0.75 },    
+      { date: '2021-02-01', jump: 0.15, ivSpike: 0.40 },    
+      { date: '2022-04-26', drop: 0.18, ivSpike: 0.52 },    
+      { date: '2023-02-08', jump: 0.10, ivSpike: 0.38 },    
+      { date: '2024-01-01', jump: 0.12, ivSpike: 0.35 }     
     ]
   }
 };
