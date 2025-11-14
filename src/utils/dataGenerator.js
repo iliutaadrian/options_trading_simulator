@@ -46,11 +46,58 @@ const STOCK_PARAMS = {
   }
 };
 
+// Calculate Garman-Klass volatility (superior for real market data)
+function calculateGarmanKlassVol(priceData, startIndex, window = 20) {
+  if (startIndex < window) return null;
+
+  let hlTerm = 0;
+  let coTerm = 0;
+
+  for (let i = startIndex - window; i < startIndex; i++) {
+    const p = priceData[i];
+    if (p.high > 0 && p.low > 0 && p.close > 0 && p.open > 0 && p.high > p.low) {
+      hlTerm += Math.pow(Math.log(p.high / p.low), 2);
+      coTerm += Math.pow(Math.log(p.close / p.open), 2);
+    }
+  }
+
+  hlTerm /= window;
+  coTerm /= window;
+
+  const gkVol = Math.sqrt(Math.max(0, 0.5 * hlTerm - (2 * Math.log(2) - 1) * coTerm));
+  return gkVol * Math.sqrt(252); // Annualize
+}
+
+// Detect if date is in crisis period (COVID crash: Feb-March 2020)
+function isCrisisPeriod(dateStr) {
+  return dateStr >= '2020-02-20' && dateStr <= '2020-03-31';
+}
+
 // Calculate dynamic IV based on recent price volatility and market events
 function calculateDynamicIV(data, index, params) {
   const baseIV = params.baseIV || 0.30;
   const lookback = 20; // 20-day lookback for realized volatility
 
+  // For real historical data with IV already set, enhance it
+  if (data[index].iv && data[index].iv > 0) {
+    // Use existing IV but enhance with realized vol component
+    const gkVol = calculateGarmanKlassVol(data, index, 20);
+    if (gkVol) {
+      // Blend existing IV with calculated volatility
+      let iv = data[index].iv * 0.7 + gkVol * 0.3;
+
+      // Add crisis spike if in COVID period
+      if (isCrisisPeriod(data[index].date)) {
+        // Enhance IV during crisis
+        iv = Math.min(0.75, iv * 1.3);
+      }
+
+      return Math.max(0.25, Math.min(0.75, iv));
+    }
+    return data[index].iv;
+  }
+
+  // For synthetic/mock data, calculate from scratch
   // Calculate realized volatility from recent price changes
   let realizedVol = 0;
   if (index >= lookback) {
@@ -92,7 +139,39 @@ function calculateDynamicIV(data, index, params) {
   return iv;
 }
 
-// Generate realistic historical stock price data with actual price movements
+// Historical data cache
+const historicalDataCache = {};
+
+// Load historical data from JSON files (for real symbols: GOOGL, META, AMZN)
+async function loadHistoricalData(symbol) {
+  if (historicalDataCache[symbol]) {
+    return historicalDataCache[symbol];
+  }
+
+  try {
+    // Use dynamic import to load data from public folder
+    const response = await fetch(new URL(`../data/${symbol.toLowerCase()}_historical.json`, import.meta.url));
+    if (response.ok) {
+      let data = await response.json();
+
+      // Apply calculateDynamicIV to all data points for consistency
+      // This ensures IV is calculated using the unified method
+      const params = { baseIV: 0.30, events: [] };
+      for (let i = 0; i < data.length; i++) {
+        data[i].iv = calculateDynamicIV(data, i, params);
+      }
+
+      historicalDataCache[symbol] = data;
+      return data;
+    }
+  } catch (error) {
+    console.warn(`Could not load historical data for ${symbol}:`, error);
+  }
+
+  return null;
+}
+
+// Generate realistic historical stock price data with actual price movements (for mock symbols)
 export function generateHistoricalData(symbol, startDate, endDate, basePrice = null) {
   const params = STOCK_PARAMS[symbol] || {
     startPrice: basePrice || 100,
@@ -175,6 +254,48 @@ export function generateHistoricalData(symbol, startDate, endDate, basePrice = n
   }
 
   return data;
+}
+
+// Get historical data (returns cached data or null if not yet loaded)
+export function getHistoricalData(symbol) {
+  // For real symbols, try to return cached data
+  if (historicalDataCache[symbol]) {
+    return historicalDataCache[symbol];
+  }
+
+  // For mock symbols, generate synthetic data
+  if (symbol.startsWith('mock_')) {
+    return generateHistoricalData(symbol, '2019-01-01', '2025-11-14');
+  }
+
+  return null;
+}
+
+// Promise to track when all data is loaded
+let dataLoadingPromise = Promise.resolve();
+
+// Initialize historical data loading on module import (pre-loads data)
+export function initializeHistoricalData(symbols) {
+  // Chain all loading promises so they complete in order
+  dataLoadingPromise = Promise.all(
+    symbols.map(symbol => {
+      if (!symbol.startsWith('mock_')) {
+        return loadHistoricalData(symbol).then(() => {
+          console.log(`Historical data loaded for ${symbol}`);
+        }).catch(err => {
+          console.error(`Failed to load historical data for ${symbol}:`, err);
+        });
+      }
+      return Promise.resolve();
+    })
+  );
+
+  return dataLoadingPromise;
+}
+
+// Wait for all data to load
+export function waitForDataLoad() {
+  return dataLoadingPromise;
 }
 
 // Generate realistic strike prices around current price

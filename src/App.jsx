@@ -3,19 +3,53 @@ import PriceChart from './components/PriceChart';
 import TimeControls from './components/TimeControls';
 import OptionsChain from './components/OptionsChain';
 import Portfolio from './components/Portfolio';
-import { generateHistoricalData, generateStrikePrices, generateExpirationDates } from './utils/dataGenerator';
+import { generateHistoricalData, generateStrikePrices, generateExpirationDates, getHistoricalData, initializeHistoricalData, waitForDataLoad } from './utils/dataGenerator';
 import { addIndicatorsToData } from './utils/technicalIndicators';
 import { calculateOptionPnL } from './utils/blackScholes';
 
+// Initialize historical data on app load
+initializeHistoricalData(['GOOGL', 'META', 'AMZN', 'mock_1', 'mock_2', 'mock_3']);
+
 function App() {
   // Stock and date settings - Data from 2019 to 2025
-  const [symbol, setSymbol] = useState('mock_1');
+  const [symbol, setSymbol] = useState('META');
   const startDate = '2019-01-01';
-  const endDate = '2025-11-11';
+  const endDate = '2025-11-14';
+
+  // Track if data has loaded
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  // Helper function to load data based on symbol type
+  const loadDataForSymbol = (sym) => {
+    let data;
+    if (sym.startsWith('mock_')) {
+      data = generateHistoricalData(sym, startDate, endDate);
+    } else {
+      data = getHistoricalData(sym);
+      if (!data) {
+        console.warn(`No data found for ${sym}, falling back to mock data`);
+        data = generateHistoricalData('mock_1', startDate, endDate);
+      }
+    }
+    return data;
+  };
 
   // Generate and process data for the selected symbol
-  const [rawData, setRawData] = useState(() => generateHistoricalData(symbol, startDate, endDate));
+  const [rawData, setRawData] = useState(() => loadDataForSymbol(symbol));
   const [priceData, setPriceData] = useState(() => addIndicatorsToData(rawData));
+
+  // Wait for historical data to load, then reload if needed
+  useEffect(() => {
+    waitForDataLoad().then(() => {
+      // Data is now loaded, check if we need to reload
+      const newData = loadDataForSymbol(symbol);
+      if (newData && newData.length > 0) {
+        setRawData(newData);
+        setPriceData(addIndicatorsToData(newData));
+      }
+      setDataLoaded(true);
+    });
+  }, []);
 
   // Time navigation - Start at day 350 to show 200-day moving average with history
   const [currentIndex, setCurrentIndex] = useState(350);
@@ -65,7 +99,7 @@ function App() {
   // Handle symbol change
   const handleSymbolChange = (newSymbol) => {
     setSymbol(newSymbol);
-    const newRawData = generateHistoricalData(newSymbol, startDate, endDate);
+    const newRawData = loadDataForSymbol(newSymbol);
     const newPriceData = addIndicatorsToData(newRawData);
     setRawData(newRawData);
     setPriceData(newPriceData);
@@ -262,65 +296,83 @@ function App() {
     setPositions(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Show loading state for real symbols on initial load
+  const isLoadingRealData = !dataLoaded && !symbol.startsWith('mock_');
+
   return (
     <div className="app">
       <header className="app-header">
         <h1>Options Trading Simulator</h1>
         <div className="stock-selector">
           <label>Stock:</label>
-          <select value={symbol} onChange={(e) => handleSymbolChange(e.target.value)}>
-            <option value="mock_1">120-300 IV 50%</option>
-            <option value="mock_2">165-750 IV 42</option>
-            <option value="mock_3">100-200 IV 80%</option>
+          <select value={symbol} onChange={(e) => handleSymbolChange(e.target.value)} disabled={isLoadingRealData}>
+            <optgroup label="Real Historical Data (2019-2025)">
+              <option value="GOOGL">GOOGL</option>
+              <option value="META">META</option>
+              <option value="AMZN">AMZN</option>
+            </optgroup>
+            <optgroup label="Mock / Synthetic Data">
+              <option value="mock_1">120-300 IV 50%</option>
+              <option value="mock_2">165-750 IV 42</option>
+              <option value="mock_3">100-200 IV 80%</option>
+            </optgroup>
           </select>
         </div>
         <div className="stock-info">
-          <span className="symbol">{symbol.match(/mock_\d+/) ? '' : symbol}</span>
+          <span className="symbol">{isLoadingRealData ? 'Loading...' : (symbol.match(/mock_\d+/) ? '' : symbol)}</span>
           <span className="price">${currentPrice.toFixed(2)}</span>
           <span className="date">{currentDate}</span>
         </div>
       </header>
 
-      <TimeControls
-        currentIndex={currentIndex}
-        totalDays={priceData.length}
-        isPlaying={isPlaying}
-        playbackSpeed={playbackSpeed}
-        onPlay={handlePlay}
-        onPause={handlePause}
-        onStepBackward={handleStepBackward}
-        onStepForward={handleStepForward}
-        onSpeedChange={handleSpeedChange}
-        onSliderChange={handleSliderChange}
-        currentDate={currentDate}
-      />
-
-      <div className="main-content">
-        <div className="left-panel">
-          <PriceChart data={priceData} currentIndex={currentIndex} />
+      {isLoadingRealData ? (
+        <div className="loading-container">
+          <p>Loading {symbol} historical data...</p>
         </div>
-
-        <div className="right-panel">
-          <OptionsChain
-            currentPrice={currentPrice}
-            currentIV={currentIV}
-            strikes={strikes}
-            expirations={expirations}
-            selectedExpiration={selectedExpiration}
-            onExpirationChange={setSelectedExpiration}
-            onTrade={handleTradeClick}
+      ) : (
+        <>
+          <TimeControls
+            currentIndex={currentIndex}
+            totalDays={priceData.length}
+            isPlaying={isPlaying}
+            playbackSpeed={playbackSpeed}
+            onPlay={handlePlay}
+            onPause={handlePause}
+            onStepBackward={handleStepBackward}
+            onStepForward={handleStepForward}
+            onSpeedChange={handleSpeedChange}
+            onSliderChange={handleSliderChange}
+            currentDate={currentDate}
           />
-        </div>
-      </div>
 
-      <Portfolio
-        positions={positions}
-        currentPrice={currentPrice}
-        currentDate={currentDate}
-        currentIV={currentIV}
-        onClosePosition={handleClosePosition}
-        closedPositions={closedPositions}
-      />
+          <div className="main-content">
+            <div className="left-panel">
+              <PriceChart data={priceData} currentIndex={currentIndex} />
+            </div>
+
+            <div className="right-panel">
+              <OptionsChain
+                currentPrice={currentPrice}
+                currentIV={currentIV}
+                strikes={strikes}
+                expirations={expirations}
+                selectedExpiration={selectedExpiration}
+                onExpirationChange={setSelectedExpiration}
+                onTrade={handleTradeClick}
+              />
+            </div>
+          </div>
+
+          <Portfolio
+            positions={positions}
+            currentPrice={currentPrice}
+            currentDate={currentDate}
+            currentIV={currentIV}
+            onClosePosition={handleClosePosition}
+            closedPositions={closedPositions}
+          />
+        </>
+      )}
 
       {/* Trade Modal */}
       {tradeModalData && (

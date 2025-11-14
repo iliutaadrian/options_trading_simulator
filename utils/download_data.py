@@ -23,9 +23,7 @@ def download_stock_data(symbol, start_date, end_date):
     """
     print(f"Downloading {symbol} data from {start_date} to {end_date}...")
 
-    # Download data
-    ticker = yf.Ticker(symbol)
-    df = ticker.history(start=start_date, end=end_date)
+    df = yf.download(symbol, start=start_date, end=end_date)
 
     # Convert to list of dictionaries
     data = []
@@ -45,9 +43,9 @@ def download_stock_data(symbol, start_date, end_date):
 
 def main():
     # Configuration
-    symbols = ['AAPL', 'META', 'GOOGL']
+    symbols = ['GOOGL', 'META', 'AMZN']
     start_date = '2019-01-01'
-    end_date = '2025-11-11'
+    end_date = '2025-11-14'
 
     # Download data for each symbol
     for symbol in symbols:
