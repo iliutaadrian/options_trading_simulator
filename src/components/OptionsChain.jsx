@@ -227,25 +227,6 @@ const OptionsChain = ({
           </tbody>
         </table>
       </div>
-
-      <div className="options-info">
-        <div className="info-box">
-          <h4>Current Stock Price</h4>
-          <p className="big-number">${currentPrice.toFixed(2)}</p>
-        </div>
-        <div className="info-box">
-          <h4>P/E Ratio</h4>
-          <p className="big-number">18.5</p>
-        </div>
-        <div className="info-box">
-          <h4>Implied Volatility</h4>
-          <p className="big-number">{(currentIV * 100).toFixed(1)}%</p>
-        </div>
-        <div className="info-box">
-          <h4>Risk-Free Rate</h4>
-          <p className="big-number">4.5%</p>
-        </div>
-      </div>
     </div>
   );
 };

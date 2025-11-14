@@ -55,50 +55,28 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
 
   return (
     <div className="portfolio">
-      <h2>Portfolio</h2>
-
       <div className="portfolio-summary">
         <div className="summary-card">
-          <h4>Total Value</h4>
-          <p className="big-number">${totalValue.toFixed(2)}</p>
-        </div>
-        <div className="summary-card">
-          <h4>Total P&L (Session)</h4>
+          <h4>Total P&L</h4>
           <p className={`big-number ${totalPnL >= 0 ? 'profit' : 'loss'}`}>
             ${totalPnL.toFixed(2)}
           </p>
-          <div style={{ fontSize: '0.85rem', marginTop: '0.5rem', color: '#888' }}>
-            <div>Unrealized: ${unrealizedPnL.toFixed(2)}</div>
-            <div>Realized: ${realizedPnL.toFixed(2)}</div>
+          <div style={{ fontSize: '0.75rem', marginTop: '0.25rem', color: '#888' }}>
+            U: ${unrealizedPnL.toFixed(2)} | R: ${realizedPnL.toFixed(2)}
+          </div>
+        </div>
+        <div className="summary-card">
+          <h4>Greeks</h4>
+          <div style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>
+            <div>Δ {portfolioGreeks.delta.toFixed(2)} | Θ {portfolioGreeks.theta.toFixed(2)}</div>
+            <div style={{ color: '#888' }}>Γ {portfolioGreeks.gamma.toFixed(4)} | V {portfolioGreeks.vega.toFixed(2)}</div>
           </div>
         </div>
         <div className="summary-card">
           <h4>Positions</h4>
           <p className="big-number">{positions.length}</p>
-          <div style={{ fontSize: '0.85rem', marginTop: '0.5rem', color: '#888' }}>
+          <div style={{ fontSize: '0.75rem', marginTop: '0.25rem', color: '#888' }}>
             Closed: {closedPositions.length}
-          </div>
-        </div>
-      </div>
-
-      <div className="portfolio-greeks">
-        <h3>Portfolio Greeks</h3>
-        <div className="greeks-grid">
-          <div className="greek-item">
-            <span className="greek-label">Delta:</span>
-            <span className="greek-value">{portfolioGreeks.delta.toFixed(2)}</span>
-          </div>
-          <div className="greek-item">
-            <span className="greek-label">Gamma:</span>
-            <span className="greek-value">{portfolioGreeks.gamma.toFixed(4)}</span>
-          </div>
-          <div className="greek-item">
-            <span className="greek-label">Theta:</span>
-            <span className="greek-value">{portfolioGreeks.theta.toFixed(2)}</span>
-          </div>
-          <div className="greek-item">
-            <span className="greek-label">Vega:</span>
-            <span className="greek-value">{portfolioGreeks.vega.toFixed(2)}</span>
           </div>
         </div>
       </div>
@@ -113,17 +91,17 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
             <thead>
               <tr>
                 <th>Type</th>
-                <th>Action</th>
                 <th>Strike</th>
-                <th>Contracts</th>
-                <th>Entry Price</th>
-                <th>Current Price</th>
-                <th>Value</th>
+                <th>Qty</th>
+                <th>Entry</th>
+                <th>Current</th>
                 <th>P&L</th>
                 <th>DTE</th>
-                <th>Delta</th>
-                <th>Theta</th>
-                <th>Action</th>
+                <th>Δ</th>
+                <th>Θ</th>
+                <th>Γ</th>
+                <th>V</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -141,27 +119,21 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
                   <tr key={pos.id}>
                     <td>
                       <span className={`option-type ${pos.type}`}>
-                        {pos.type.toUpperCase()}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`action-badge ${pos.action}`}>
-                        {pos.action.toUpperCase()}
+                        {pos.action === 'buy' ? '+' : '-'}{pos.type[0].toUpperCase()}
                       </span>
                     </td>
                     <td>${pos.strike}</td>
                     <td>{pos.contracts}</td>
                     <td>${pos.entryPrice.toFixed(2)}</td>
                     <td>${pos.currentPrice.toFixed(2)}</td>
-                    <td>${pos.currentValue.toFixed(2)}</td>
                     <td className={pos.pnl >= 0 ? 'profit' : 'loss'}>
-                      ${pos.pnl.toFixed(2)}
-                      <br />
-                      <span className="pnl-percent">({pos.pnlPercent.toFixed(2)}%)</span>
+                      ${pos.pnl.toFixed(2)} ({pos.pnlPercent.toFixed(1)}%)
                     </td>
                     <td>{pos.daysToExpiry}</td>
-                    <td title={`Multiplier: ${positionMultiplier}`}>{positionDelta.toFixed(3)}</td>
-                    <td>{pos.greeks.theta.toFixed(3)}</td>
+                    <td title={`Multiplier: ${positionMultiplier}`}>{positionDelta.toFixed(2)}</td>
+                    <td>{pos.greeks.theta.toFixed(2)}</td>
+                    <td>{pos.greeks.gamma.toFixed(4)}</td>
+                    <td>{pos.greeks.vega.toFixed(2)}</td>
                     <td>
                       <button
                         className="close-btn"

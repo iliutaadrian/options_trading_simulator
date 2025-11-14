@@ -360,17 +360,17 @@ function App() {
                 onExpirationChange={setSelectedExpiration}
                 onTrade={handleTradeClick}
               />
+
+              <Portfolio
+                positions={positions}
+                currentPrice={currentPrice}
+                currentDate={currentDate}
+                currentIV={currentIV}
+                onClosePosition={handleClosePosition}
+                closedPositions={closedPositions}
+              />
             </div>
           </div>
-
-          <Portfolio
-            positions={positions}
-            currentPrice={currentPrice}
-            currentDate={currentDate}
-            currentIV={currentIV}
-            onClosePosition={handleClosePosition}
-            closedPositions={closedPositions}
-          />
         </>
       )}
 
