@@ -34,9 +34,17 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
     sum + (p.entryPrice * p.contracts * 100), 0
   );
 
-  // Calculate portfolio Greeks
+  // Calculate portfolio Greeks with correct multipliers
+  // Buy Call: +1, Sell Call: -1, Buy Put: -1, Sell Put: +1
+  // (Puts are naturally negative delta, so buy put = negative position)
   const portfolioGreeks = positionMetrics.reduce((acc, p) => {
-    const multiplier = p.action === 'buy' ? 1 : -1;
+    let multiplier;
+    if (p.type === 'call') {
+      multiplier = p.action === 'buy' ? 1 : -1;
+    } else {
+      multiplier = p.action === 'buy' ? 1 : 1;
+    }
+
     return {
       delta: acc.delta + (p.greeks.delta * p.contracts * 100 * multiplier),
       gamma: acc.gamma + (p.greeks.gamma * p.contracts * 100 * multiplier),
@@ -119,42 +127,53 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
               </tr>
             </thead>
             <tbody>
-              {positionMetrics.map((pos) => (
-                <tr key={pos.id}>
-                  <td>
-                    <span className={`option-type ${pos.type}`}>
-                      {pos.type.toUpperCase()}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`action-badge ${pos.action}`}>
-                      {pos.action.toUpperCase()}
-                    </span>
-                  </td>
-                  <td>${pos.strike}</td>
-                  <td>{pos.contracts}</td>
-                  <td>${pos.entryPrice.toFixed(2)}</td>
-                  <td>${pos.currentPrice.toFixed(2)}</td>
-                  <td>${pos.currentValue.toFixed(2)}</td>
-                  <td className={pos.pnl >= 0 ? 'profit' : 'loss'}>
-                    ${pos.pnl.toFixed(2)}
-                    <br />
-                    <span className="pnl-percent">({pos.pnlPercent.toFixed(2)}%)</span>
-                  </td>
-                  <td>{pos.daysToExpiry}</td>
-                  <td>{pos.greeks.delta.toFixed(3)}</td>
-                  <td>{pos.greeks.theta.toFixed(3)}</td>
-                  <td>
-                    <button
-                      className="close-btn"
-                      onClick={() => onClosePosition(pos.index)}
-                      title="Close Position"
-                    >
-                      ✕
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {positionMetrics.map((pos) => {
+                // Calculate position multiplier for display
+                let positionMultiplier;
+                if (pos.type === 'call') {
+                  positionMultiplier = pos.action === 'buy' ? 1 : -1;
+                } else {
+                  positionMultiplier = pos.action === 'buy' ? -1 : 1;
+                }
+                const positionDelta = pos.greeks.delta * positionMultiplier;
+
+                return (
+                  <tr key={pos.id}>
+                    <td>
+                      <span className={`option-type ${pos.type}`}>
+                        {pos.type.toUpperCase()}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`action-badge ${pos.action}`}>
+                        {pos.action.toUpperCase()}
+                      </span>
+                    </td>
+                    <td>${pos.strike}</td>
+                    <td>{pos.contracts}</td>
+                    <td>${pos.entryPrice.toFixed(2)}</td>
+                    <td>${pos.currentPrice.toFixed(2)}</td>
+                    <td>${pos.currentValue.toFixed(2)}</td>
+                    <td className={pos.pnl >= 0 ? 'profit' : 'loss'}>
+                      ${pos.pnl.toFixed(2)}
+                      <br />
+                      <span className="pnl-percent">({pos.pnlPercent.toFixed(2)}%)</span>
+                    </td>
+                    <td>{pos.daysToExpiry}</td>
+                    <td title={`Multiplier: ${positionMultiplier}`}>{positionDelta.toFixed(3)}</td>
+                    <td>{pos.greeks.theta.toFixed(3)}</td>
+                    <td>
+                      <button
+                        className="close-btn"
+                        onClick={() => onClosePosition(pos.index)}
+                        title="Close Position"
+                      >
+                        ✕
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
