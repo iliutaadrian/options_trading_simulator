@@ -130,7 +130,6 @@ const OptionsChain = ({
       <div className="options-header">
         <h2>Options Chain</h2>
         <div className="options-controls">
-          <span>Expiration</span>
           <select value={selectedExpiration} onChange={(e) => onExpirationChange(e.target.value)}>
             {expirations.map(exp => (
               <option key={exp.date} value={exp.date}>

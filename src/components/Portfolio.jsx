@@ -67,9 +67,11 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
         </div>
         <div className="summary-card">
           <h4>Greeks</h4>
-          <div style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>
-            <div>Δ {portfolioGreeks.delta.toFixed(2)} | Θ {portfolioGreeks.theta.toFixed(2)}</div>
-            <div style={{ color: '#888' }}>Γ {portfolioGreeks.gamma.toFixed(4)} | V {portfolioGreeks.vega.toFixed(2)}</div>
+          <div style={{ fontSize: '15px', marginTop: '0.25rem', display: 'flex', justifyContent: 'space-around' }}>
+            <div><span style={{fontSize: '20px'}}>Δ</span> {portfolioGreeks.delta.toFixed(2)}</div>
+            <div><span style={{fontSize: '20px'}}>Θ</span> {portfolioGreeks.theta.toFixed(2)}</div>
+            <div><span style={{fontSize: '20px'}}>Γ</span> {portfolioGreeks.gamma.toFixed(4)} </div>
+            <div><span style={{fontSize: '20px'}}>V</span> {portfolioGreeks.vega.toFixed(2)}</div>
           </div>
         </div>
         <div className="summary-card">

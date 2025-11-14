@@ -64,10 +64,10 @@ function App() {
   const currentIV = currentData?.iv || 0.35; // Get dynamic IV from current date
 
   const [strikes, setStrikes] = useState(() => generateStrikePrices(currentPrice));
-  const [expirations, setExpirations] = useState(() => generateExpirationDates(currentDate, 6));
+  const [expirations, setExpirations] = useState(() => generateExpirationDates(currentDate));
   // Default to 30-day expiration (closest to 30 days)
   const [selectedExpiration, setSelectedExpiration] = useState(() => {
-    const initialExpirations = generateExpirationDates(currentDate, 6);
+    const initialExpirations = generateExpirationDates(currentDate);
     const thirtyDayExp = initialExpirations.find(exp => exp.isDefault) || initialExpirations.find(exp => exp.daysToExpiry >= 25 && exp.daysToExpiry <= 35) || initialExpirations[2];
     return thirtyDayExp?.date;
   });
@@ -75,7 +75,7 @@ function App() {
   // Update expirations and strikes as time moves forward
   useEffect(() => {
     if (currentDate) {
-      const newExpirations = generateExpirationDates(currentDate, 6);
+      const newExpirations = generateExpirationDates(currentDate);
       setExpirations(newExpirations);
       if (!newExpirations.find(exp => exp.date === selectedExpiration)) {
         // Select 30-day expiration or closest
@@ -109,7 +109,7 @@ function App() {
     // Update strikes and expirations based on new data
     const newCurrentPrice = newPriceData[350]?.close || 150;
     setStrikes(generateStrikePrices(newCurrentPrice));
-    const newExpirations = generateExpirationDates(newPriceData[350]?.date || startDate, 6);
+    const newExpirations = generateExpirationDates(newPriceData[350]?.date || startDate);
     setExpirations(newExpirations);
 
     // Default to 30-day expiration

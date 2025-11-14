@@ -312,12 +312,12 @@ export function generateStrikePrices(currentPrice, count = 50) {
 }
 
 // Generate expiration dates - focused on 30 days (monthly options)
-export function generateExpirationDates(currentDate, count = 6) {
+export function generateExpirationDates(currentDate, count = 15) {
   const expirations = [];
   const current = new Date(currentDate);
 
   // Target dates in days from now: 7, 14, 30, 45, 60, 90
-  const targetDays = [7, 14, 30, 45, 60, 90];
+  const targetDays = [7, 14, 30, 45, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360];
 
   targetDays.slice(0, count).forEach(days => {
     const expDate = new Date(current);
