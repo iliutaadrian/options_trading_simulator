@@ -28,7 +28,7 @@ const OptionsChain = ({
         const rowTop = atmRow.offsetTop;
         const rowHeight = atmRow.offsetHeight;
         const containerHeight = container.clientHeight;
-        const scrollPosition = rowTop - (containerHeight / 2) + (rowHeight / 2);
+        const scrollPosition = rowTop - (containerHeight / 2) + (rowHeight / 2) - 50;
 
         container.scrollTop = scrollPosition;
       }

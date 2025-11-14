@@ -299,10 +299,10 @@ export function waitForDataLoad() {
 }
 
 // Generate realistic strike prices around current price
-export function generateStrikePrices(currentPrice, count = 10) {
+export function generateStrikePrices(currentPrice, count = 50) {
   const strikes = [];
   const baseStrike = Math.round(currentPrice / 5) * 5; // Round to nearest $5
-  const step = 1;
+  const step = 5;
 
   for (let i = -count/2; i <= count/2; i++) {
     strikes.push(baseStrike + (i * step));

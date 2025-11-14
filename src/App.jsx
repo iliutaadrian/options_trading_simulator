@@ -63,7 +63,7 @@ function App() {
   const currentDate = currentData?.date || startDate;
   const currentIV = currentData?.iv || 0.35; // Get dynamic IV from current date
 
-  const [strikes, setStrikes] = useState(() => generateStrikePrices(currentPrice, 100));
+  const [strikes, setStrikes] = useState(() => generateStrikePrices(currentPrice));
   const [expirations, setExpirations] = useState(() => generateExpirationDates(currentDate, 6));
   // Default to 30-day expiration (closest to 30 days)
   const [selectedExpiration, setSelectedExpiration] = useState(() => {
@@ -92,7 +92,7 @@ function App() {
     const currentStrikeCenter = strikes[Math.floor(strikes.length / 2)];
     const priceDiff = Math.abs(currentPrice - currentStrikeCenter);
     if (priceDiff > currentPrice * 0.15) { // Update if price moved >15%
-      setStrikes(generateStrikePrices(currentPrice, 100));
+      setStrikes(generateStrikePrices(currentPrice));
     }
   }, [currentPrice]);
 
@@ -108,7 +108,7 @@ function App() {
 
     // Update strikes and expirations based on new data
     const newCurrentPrice = newPriceData[350]?.close || 150;
-    setStrikes(generateStrikePrices(newCurrentPrice, 100));
+    setStrikes(generateStrikePrices(newCurrentPrice));
     const newExpirations = generateExpirationDates(newPriceData[350]?.date || startDate, 6);
     setExpirations(newExpirations);
 
