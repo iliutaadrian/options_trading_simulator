@@ -68,6 +68,15 @@ const OptionsChain = ({
     const rowId = `${strike}-${type}`;
     const rowClass = atm ? 'atm' : (itm ? 'itm' : 'otm');
 
+    if (isNaN(data.delta) ||
+        data.price < 0.01 ||
+        Math.abs(data.delta) < 0.001 ||
+        Math.abs(data.delta) > 0.999 ||
+        Math.abs(data.delta - 1) < 0.001 ||
+        Math.abs(data.delta + 1) < 0.001) {
+      return null;
+    }
+
     return (
       <tr key={rowId} className={rowClass} data-strike={strike}>
         <td className="strike-cell">
@@ -204,7 +213,7 @@ const OptionsChain = ({
               const nextItm = nextStrike ? isITM(nextStrike, activeTab === 'calls' ? 'call' : 'put') : currentItm;
 
               // Show divider when transitioning from ITM to OTM or vice versa
-              if (currentItm !== nextItm && nextStrike) {
+              if (row &&currentItm !== nextItm && nextStrike) {
                 return (
                   <React.Fragment key={`${strike}-${activeTab}`}>
                     {row}

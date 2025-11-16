@@ -312,9 +312,9 @@ function App() {
               <option value="AMZN">AMZN</option>
             </optgroup>
             <optgroup label="Mock / Synthetic Data">
-              <option value="mock_1">120-300 IV 50%</option>
-              <option value="mock_2">165-750 IV 42</option>
-              <option value="mock_3">100-200 IV 80%</option>
+              <option value="mock_1">Max Crash</option>
+              <option value="mock_2">Whipsaw</option>
+              <option value="mock_3">Moonshot</option>
             </optgroup>
           </select>
         </div>

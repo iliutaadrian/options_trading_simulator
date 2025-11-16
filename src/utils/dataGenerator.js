@@ -1,47 +1,115 @@
-// Stock-specific parameters based on realistic historical patterns (2019-2025)
+// Stock-specific parameters - EXTREME CASE scenarios for testing (2019-2025)
 const STOCK_PARAMS = {
+  // SCENARIO 1: MAX_CRASH - 80% drawdown with multiple fakeouts and bull traps
+  // Tests: protective puts, bear spreads, not catching falling knives, hedging timing
   mock_1: {
-    startPrice: 120,      
-    endPrice: 300,       
-    volatility: 0.03,      
-    drift: 0.0012,
-    baseIV: 0.40,           
-    volume: { min: 40000000, max: 120000000 },
+    startPrice: 40,
+    endPrice: 200,         // 80% total decline
+    volatility: 0.055,     // High daily volatility
+    drift: -0.002,         // Strong negative drift
+    baseIV: 0.70,          // Very high base IV (fear)
+    volume: { min: 50000000, max: 150000000 },  // High volume (panic selling)
     events: [
-      { date: '2020-03-15', drop: 0.25, ivSpike: 0.80 },    
-      { date: '2020-08-31', jump: 0.12, ivSpike: 0.50 },    
-      { date: '2022-01-03', drop: 0.20, ivSpike: 0.60 },    
-      { date: '2023-07-01', jump: 0.15, ivSpike: 0.45 }     
+      // Initial crash
+      { date: '2019-08-15', drop: 0.18, ivSpike: 0.90 },
+      // Fake recovery (bull trap)
+      { date: '2019-10-10', jump: 0.08, ivSpike: 0.75 },
+      // COVID mega-crash
+      { date: '2020-03-12', drop: 0.30, ivSpike: 1.20 },
+      // Small dead-cat bounce
+      { date: '2020-05-20', jump: 0.06, ivSpike: 0.85 },
+      // Another leg down
+      { date: '2020-09-15', drop: 0.22, ivSpike: 0.95 },
+      // Fake recovery #2
+      { date: '2021-03-10', jump: 0.10, ivSpike: 0.80 },
+      // Slow grind down continues
+      { date: '2021-11-05', drop: 0.15, ivSpike: 0.85 },
+      // Tiny relief rally (another trap)
+      { date: '2022-04-01', jump: 0.05, ivSpike: 0.75 },
+      // Final capitulation
+      { date: '2022-10-15', drop: 0.25, ivSpike: 1.10 },
+      // Weak bounce
+      { date: '2023-02-10', jump: 0.07, ivSpike: 0.70 },
+      // More downside
+      { date: '2023-08-20', drop: 0.12, ivSpike: 0.80 },
+      // Last trap
+      { date: '2024-03-15', jump: 0.04, ivSpike: 0.65 },
+      // Final collapse
+      { date: '2024-09-01', drop: 0.20, ivSpike: 1.00 }
     ]
   },
+
+  // SCENARIO 2: WHIPSAW - Extreme volatility with no clear direction
+  // Tests: gamma risk, vega exposure, straddles/strangles, stop-loss discipline
   mock_2: {
-    startPrice: 165.00,     
-    endPrice: 750.00,       
-    volatility: 0.035,      
-    drift: 0.0008,
-    baseIV: 0.42,           
-    volume: { min: 15000000, max: 45000000 },
+    startPrice: 100.00,
+    endPrice: 110.00,       // Only +10% over 6 years but wild ride
+    volatility: 0.085,      // Extreme daily volatility
+    drift: 0.0001,          // Basically sideways
+    baseIV: 1.10,           // Insanely high IV (100%+)
+    volume: { min: 80000000, max: 200000000 },  // Huge volume swings
     events: [
-      { date: '2020-03-15', drop: 0.30, ivSpike: 0.85 },    
-      { date: '2021-09-01', jump: 0.18, ivSpike: 0.50 },    
-      { date: '2022-02-03', drop: 0.26, ivSpike: 0.70 },    
-      { date: '2023-02-01', jump: 0.23, ivSpike: 0.55 },    
-      { date: '2024-04-01', jump: 0.12, ivSpike: 0.48 }     
+      { date: '2019-03-15', jump: 0.15, ivSpike: 1.30 },
+      { date: '2019-06-20', drop: 0.18, ivSpike: 1.35 },
+      { date: '2019-09-10', jump: 0.20, ivSpike: 1.28 },
+      { date: '2019-12-05', drop: 0.12, ivSpike: 1.25 },
+      { date: '2020-02-25', drop: 0.25, ivSpike: 1.50 },
+      { date: '2020-05-15', jump: 0.22, ivSpike: 1.45 },
+      { date: '2020-08-10', drop: 0.15, ivSpike: 1.40 },
+      { date: '2020-11-20', jump: 0.18, ivSpike: 1.35 },
+      { date: '2021-02-10', drop: 0.20, ivSpike: 1.42 },
+      { date: '2021-05-25', jump: 0.16, ivSpike: 1.38 },
+      { date: '2021-08-15', drop: 0.14, ivSpike: 1.33 },
+      { date: '2021-11-05', jump: 0.19, ivSpike: 1.40 },
+      { date: '2022-01-20', drop: 0.22, ivSpike: 1.48 },
+      { date: '2022-04-15', jump: 0.17, ivSpike: 1.36 },
+      { date: '2022-07-10', drop: 0.16, ivSpike: 1.39 },
+      { date: '2022-10-25', jump: 0.21, ivSpike: 1.44 },
+      { date: '2023-01-15', drop: 0.13, ivSpike: 1.32 },
+      { date: '2023-04-20', jump: 0.15, ivSpike: 1.35 },
+      { date: '2023-07-10', drop: 0.19, ivSpike: 1.41 },
+      { date: '2023-10-05', jump: 0.18, ivSpike: 1.37 },
+      { date: '2024-01-25', drop: 0.14, ivSpike: 1.34 },
+      { date: '2024-05-10', jump: 0.16, ivSpike: 1.38 },
+      { date: '2024-08-15', drop: 0.17, ivSpike: 1.40 },
+      { date: '2024-11-01', jump: 0.12, ivSpike: 1.30 }
     ]
   },
+
+  // SCENARIO 3: MOONSHOT - Relentless bull market (500% gain)
+  // Tests: taking profits too early, FOMO, opportunity cost of hedging, when NOT to buy puts
   mock_3: {
-    startPrice: 100.00,      
-    endPrice: 200.00,       
-    volatility: 0.04,      
-    drift: 0.0007,
-    baseIV: 0.80,           
+    startPrice: 50.00,
+    endPrice: 300.00,       // 500% gain - "it only goes up"
+    volatility: 0.022,      // Low volatility (steady climb)
+    drift: 0.0025,          // Strong positive drift
+    baseIV: 0.25,           // Low IV (complacency, no fear)
     volume: { min: 20000000, max: 60000000 },
     events: [
-      { date: '2020-03-15', drop: 0.28, ivSpike: 0.75 },    
-      { date: '2021-02-01', jump: 0.15, ivSpike: 0.40 },    
-      { date: '2022-04-26', drop: 0.18, ivSpike: 0.52 },    
-      { date: '2023-02-08', jump: 0.10, ivSpike: 0.38 },    
-      { date: '2024-01-01', jump: 0.12, ivSpike: 0.35 }     
+      // Mostly jumps with very few/shallow drops
+      { date: '2019-04-10', jump: 0.12, ivSpike: 0.30 },
+      { date: '2019-08-20', jump: 0.10, ivSpike: 0.28 },
+      { date: '2020-01-15', jump: 0.15, ivSpike: 0.32 },
+      // Tiny dip (immediately bought)
+      { date: '2020-03-15', drop: 0.05, ivSpike: 0.35 },
+      { date: '2020-06-10', jump: 0.18, ivSpike: 0.30 },
+      { date: '2020-09-25', jump: 0.14, ivSpike: 0.28 },
+      { date: '2021-01-20', jump: 0.20, ivSpike: 0.32 },
+      // Another tiny dip
+      { date: '2021-05-10', drop: 0.03, ivSpike: 0.30 },
+      { date: '2021-08-15', jump: 0.16, ivSpike: 0.28 },
+      { date: '2021-11-10', jump: 0.22, ivSpike: 0.35 },
+      { date: '2022-02-20', jump: 0.15, ivSpike: 0.30 },
+      { date: '2022-06-15', jump: 0.18, ivSpike: 0.32 },
+      // Small pullback (bought aggressively)
+      { date: '2022-09-10', drop: 0.04, ivSpike: 0.33 },
+      { date: '2022-12-05', jump: 0.17, ivSpike: 0.29 },
+      { date: '2023-03-20', jump: 0.25, ivSpike: 0.35 },
+      { date: '2023-07-10', jump: 0.19, ivSpike: 0.32 },
+      { date: '2023-10-25', jump: 0.21, ivSpike: 0.33 },
+      { date: '2024-02-15', jump: 0.16, ivSpike: 0.30 },
+      { date: '2024-06-10', jump: 0.23, ivSpike: 0.34 },
+      { date: '2024-09-20', jump: 0.20, ivSpike: 0.32 }
     ]
   }
 };
@@ -302,9 +370,22 @@ export function waitForDataLoad() {
 export function generateStrikePrices(currentPrice, count = 50) {
   const strikes = [];
   const baseStrike = Math.round(currentPrice / 5) * 5; // Round to nearest $5
-  const step = 5;
 
-  for (let i = -count/2; i <= count/2; i++) {
+  let step = 1;
+
+  if (currentPrice > 100) {
+    step = 5;
+  }
+  else if (currentPrice > 1000) {
+    step = 10;
+  }
+  else if (currentPrice < 15) {
+    step = 0.25;
+  }
+
+
+
+  for (let i = -count / 2; i <= count / 2; i++) {
     strikes.push(baseStrike + (i * step));
   }
 
