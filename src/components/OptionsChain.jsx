@@ -83,6 +83,9 @@ const OptionsChain = ({
           ${strike}
         </td>
         <td className="price-cell">${data.price.toFixed(2)}</td>
+        <td className="profit">
+          {(data.price / strike * 100).toFixed(1)}%
+        </td>
         <td>{data.delta.toFixed(3)}</td>
         <td>{data.gamma.toFixed(4)}</td>
         <td>{data.theta.toFixed(3)}</td>
@@ -195,6 +198,7 @@ const OptionsChain = ({
             <tr>
               <th>Strike</th>
               <th>Price</th>
+              <th>RoR</th> 
               <th>Delta</th>
               <th>Gamma</th>
               <th>Theta</th>
