@@ -3,7 +3,7 @@ import PriceChart from './components/PriceChart';
 import TimeControls from './components/TimeControls';
 import OptionsChain from './components/OptionsChain';
 import Portfolio from './components/Portfolio';
-import { generateHistoricalData, generateStrikePrices, generateExpirationDates, getHistoricalData, initializeHistoricalData, waitForDataLoad } from './utils/dataGenerator';
+import { generateHistoricalData, generateStrikePrices, generateExpirationDates, getHistoricalData, initializeHistoricalData, waitForDataLoad, calculateIVRank } from './utils/dataGenerator';
 import { addIndicatorsToData } from './utils/technicalIndicators';
 import { calculateOptionPnL } from './utils/blackScholes';
 import vixData from './data/^vix_historical.json';
@@ -75,6 +75,9 @@ function App() {
   // Get current 10-Year Treasury rate by matching date (TNX is in basis points, so divide by 100 for percentage)
   const currentTnx = tnxData.find(p => p.date === currentDate)?.close || null;
   const currentRiskFreeRate = currentTnx ? currentTnx / 100 : 0.045; // Default to 4.5% if no data
+
+  // Calculate IV Rank for the current stock based on historical IV data
+  const currentIVRank = rawData && currentIndex >= 0 ? calculateIVRank(rawData, currentIndex) : null;
 
   const [strikes, setStrikes] = useState(() => generateStrikePrices(currentPrice));
   const [expirations, setExpirations] = useState(() => generateExpirationDates(currentDate));
@@ -345,6 +348,9 @@ function App() {
           )}
           {currentTnx !== null && (
             <span className="indicator tnx">TNX: {(currentRiskFreeRate * 100).toFixed(2)}%</span>
+          )}
+          {currentIVRank !== null && (
+            <span className={`indicator iv-rank ${currentIVRank >= 0.5 ? 'iv-high' : 'iv-low'}`} title={`IV Rank: ${(currentIVRank * 100).toFixed(0)}% - Measures where current IV stands relative to the past year (0% = lowest, 100% = highest)`}>IVR: {(currentIVRank * 100).toFixed(0)}%</span>
           )}
         </div>
       </header>

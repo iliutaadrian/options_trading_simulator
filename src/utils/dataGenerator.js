@@ -207,6 +207,43 @@ function calculateDynamicIV(data, index, params) {
   return iv;
 }
 
+// Calculate IV rank for a given stock's historical data
+// IV Rank = (Current IV - 52W Low IV) / (52W High IV - 52W Low IV)
+// This tells you where current IV stands relative to the past year
+export function calculateIVRank(historicalData, currentIndex, lookbackPeriod = 252) { // 252 trading days = ~1 year
+  if (!historicalData || historicalData.length === 0) {
+    return null;
+  }
+
+  // Calculate the starting index for the lookback period
+  const startLookbackIndex = Math.max(0, currentIndex - lookbackPeriod);
+  const ivValues = [];
+
+  // Collect IV values for the lookback period
+  for (let i = startLookbackIndex; i <= currentIndex; i++) {
+    if (historicalData[i] && historicalData[i].iv !== undefined) {
+      ivValues.push(historicalData[i].iv);
+    }
+  }
+
+  if (ivValues.length === 0) {
+    return null;
+  }
+
+  // Calculate min and max IV over the period
+  const minIV = Math.min(...ivValues);
+  const maxIV = Math.max(...ivValues);
+  const currentIV = historicalData[currentIndex].iv;
+
+  // Calculate IV Rank: (Current IV - Min IV) / (Max IV - Min IV)
+  if (maxIV === minIV) {
+    return 0.50; // If min and max are the same, return 50%
+  }
+
+  const ivRank = (currentIV - minIV) / (maxIV - minIV);
+  return parseFloat(ivRank.toFixed(2));
+}
+
 // Historical data cache
 const historicalDataCache = {};
 
