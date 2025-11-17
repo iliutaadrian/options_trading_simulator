@@ -80,6 +80,12 @@ body {
   color: #00ff88;
 }
 
+.stock-info .vix {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #00d4ff;
+}
+
 .stock-info .date {
   font-size: 1rem;
   color: #888;
@@ -1105,6 +1111,10 @@ body {
 
   .stock-info .price {
     font-size: 1.3rem;
+  }
+
+  .stock-info .vix {
+    font-size: 1rem;
   }
 
   .playback-buttons {

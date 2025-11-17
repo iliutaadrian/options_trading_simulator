@@ -43,7 +43,7 @@ def download_stock_data(symbol, start_date, end_date):
 
 def main():
     # Configuration
-    symbols = ['GOOGL', 'META', 'AMZN', 'NVDA', 'PLTR', 'SPY']
+    symbols = ['GOOGL', 'META', 'AMZN', 'NVDA', 'PLTR', 'SPY', '^VIX']
     start_date = '2018-01-01'
     end_date = '2025-11-14'
 

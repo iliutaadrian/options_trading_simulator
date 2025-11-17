@@ -6,6 +6,7 @@ import Portfolio from './components/Portfolio';
 import { generateHistoricalData, generateStrikePrices, generateExpirationDates, getHistoricalData, initializeHistoricalData, waitForDataLoad } from './utils/dataGenerator';
 import { addIndicatorsToData } from './utils/technicalIndicators';
 import { calculateOptionPnL } from './utils/blackScholes';
+import vixData from './data/vix_historical.json';
 
 // Initialize historical data on app load
 initializeHistoricalData(['GOOGL', 'META', 'AMZN', 'NVDA', 'PLTR', 'SPY', 'mock_1', 'mock_2', 'mock_3']);
@@ -62,6 +63,9 @@ function App() {
   const currentPrice = currentData?.close || 150;
   const currentDate = currentData?.date || startDate;
   const currentIV = currentData?.iv || 0.35; // Get dynamic IV from current date
+
+  // Get current VIX value by matching date
+  const currentVIX = vixData.find(v => v.date === currentDate)?.close || null;
 
   const [strikes, setStrikes] = useState(() => generateStrikePrices(currentPrice));
   const [expirations, setExpirations] = useState(() => generateExpirationDates(currentDate));
@@ -325,6 +329,9 @@ function App() {
         <div className="stock-info">
           <span className="symbol">{isLoadingRealData ? 'Loading...' : (symbol.match(/mock_\d+/) ? '' : symbol)}</span>
           <span className="price">${currentPrice.toFixed(2)}</span>
+          {currentVIX !== null && (
+            <span className="vix">VIX: {currentVIX.toFixed(2)}</span>
+          )}
           <span className="date">{currentDate}</span>
         </div>
       </header>
