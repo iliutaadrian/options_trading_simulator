@@ -64,26 +64,57 @@ body {
 
 .stock-info {
   display: flex;
-  gap: 1.5rem;
+  gap: 0.8rem;
   align-items: center;
 }
 
 .stock-info .symbol {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 1.6rem;
+  font-weight: 700;
   color: #ffaa00;
+  padding: 0.2rem 0.5rem;
+  background: rgba(255, 170, 0, 0.1);
+  border-radius: 6px;
 }
 
 .stock-info .price {
   font-size: 1.8rem;
-  font-weight: 700;
+  font-weight: 800;
   color: #00ff88;
+  padding: 0.2rem 0.5rem;
+  background: rgba(0, 255, 136, 0.1);
+  border-radius: 6px;
 }
 
-.stock-info .vix {
-  font-size: 1.3rem;
+.stock-info .indicator {
+  font-size: 1.1rem;
   font-weight: 600;
+  padding: 0.4rem 0.7rem;
+  background: rgba(30, 41, 64, 0.7);
+  border-radius: 6px;
+  border: 1px solid #2a3552;
+  min-width: 75px;
+  text-align: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.stock-info .indicator:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  background: rgba(42, 53, 82, 0.8);
+}
+
+.stock-info .indicator.vix {
   color: #00d4ff;
+}
+
+.stock-info .indicator.spy {
+  color: #5d8aff;
+}
+
+.stock-info .indicator.tnx {
+  color: #ff6b6b;
 }
 
 .stock-info .date {

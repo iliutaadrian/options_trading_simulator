@@ -8,7 +8,8 @@ const OptionsChain = ({
   expirations,
   selectedExpiration,
   onExpirationChange,
-  onTrade
+  onTrade,
+  riskFreeRate = 0.045
 }) => {
   const [activeTab, setActiveTab] = useState('calls');
   const [defaultContracts, setDefaultContracts] = useState(10);
@@ -43,7 +44,7 @@ const OptionsChain = ({
       currentPrice,
       strike,
       expiration.daysToExpiry,
-      0.045, // 4.5% risk-free rate
+      riskFreeRate, // Dynamic risk-free rate
       currentIV, // Use dynamic IV from current date
       optionType
     );

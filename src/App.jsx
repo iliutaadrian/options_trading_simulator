@@ -6,8 +6,9 @@ import Portfolio from './components/Portfolio';
 import { generateHistoricalData, generateStrikePrices, generateExpirationDates, getHistoricalData, initializeHistoricalData, waitForDataLoad } from './utils/dataGenerator';
 import { addIndicatorsToData } from './utils/technicalIndicators';
 import { calculateOptionPnL } from './utils/blackScholes';
-import vixData from './data/vix_historical.json';
+import vixData from './data/^vix_historical.json';
 import spyData from './data/spy_historical.json';
+import tnxData from './data/^tnx_historical.json';
 
 // Initialize historical data on app load
 initializeHistoricalData(['GOOGL', 'META', 'AMZN', 'NVDA', 'PLTR', 'SPY', 'mock_1', 'mock_2', 'mock_3']);
@@ -70,6 +71,10 @@ function App() {
 
   // Get current SPY value by matching date
   const currentSPY = spyData.find(p => p.date === currentDate)?.close || null;
+
+  // Get current 10-Year Treasury rate by matching date (TNX is in basis points, so divide by 100 for percentage)
+  const currentTnx = tnxData.find(p => p.date === currentDate)?.close || null;
+  const currentRiskFreeRate = currentTnx ? currentTnx / 100 : 0.045; // Default to 4.5% if no data
 
   const [strikes, setStrikes] = useState(() => generateStrikePrices(currentPrice));
   const [expirations, setExpirations] = useState(() => generateExpirationDates(currentDate));
@@ -270,7 +275,7 @@ function App() {
       entryDate: currentDate,
       entryStockPrice: currentPrice,
       volatility: currentIV, // Use current IV at time of trade
-      riskFreeRate: 0.045
+      riskFreeRate: currentRiskFreeRate
     };
 
     setPositions(prev => [...prev, newPosition]);
@@ -331,13 +336,15 @@ function App() {
           </select>
         </div>
         <div className="stock-info">
-          <span className="symbol">{isLoadingRealData ? 'Loading...' : (symbol.match(/mock_\d+/) ? '' : symbol)}</span>
           <span className="price">${currentPrice.toFixed(2)}</span>
           {currentVIX !== null && (
-            <span className="vix">VIX: {currentVIX.toFixed(2)}</span>
+            <span className="indicator vix">VIX: {currentVIX.toFixed(2)}</span>
           )}
           {currentSPY !== null && (
-            <span className="vix">SPY: {currentSPY.toFixed(2)}</span>
+            <span className="indicator spy">SPY: {currentSPY.toFixed(2)}</span>
+          )}
+          {currentTnx !== null && (
+            <span className="indicator tnx">TNX: {(currentRiskFreeRate * 100).toFixed(2)}%</span>
           )}
         </div>
       </header>
@@ -376,6 +383,7 @@ function App() {
                 selectedExpiration={selectedExpiration}
                 onExpirationChange={setSelectedExpiration}
                 onTrade={handleTradeClick}
+                riskFreeRate={currentRiskFreeRate}
               />
 
               <Portfolio
