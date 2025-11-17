@@ -8,7 +8,7 @@ import { addIndicatorsToData } from './utils/technicalIndicators';
 import { calculateOptionPnL } from './utils/blackScholes';
 
 // Initialize historical data on app load
-initializeHistoricalData(['GOOGL', 'META', 'AMZN', 'mock_1', 'mock_2', 'mock_3']);
+initializeHistoricalData(['GOOGL', 'META', 'AMZN', 'NVDA', 'PLTR', 'SPY', 'mock_1', 'mock_2', 'mock_3']);
 
 function App() {
   // Stock and date settings - Data from 2019 to 2025
@@ -310,6 +310,10 @@ function App() {
               <option value="GOOGL">GOOGL</option>
               <option value="META">META</option>
               <option value="AMZN">AMZN</option>
+              <option value="NVDA">NVDA</option>
+              <option value="AMZN">AMZN</option>
+              <option value="PLTR">PLTR</option>
+              <option value="SPY">SPY</option>
             </optgroup>
             <optgroup label="Mock / Synthetic Data">
               <option value="mock_1">Max Crash</option>
