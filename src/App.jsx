@@ -7,6 +7,7 @@ import { generateHistoricalData, generateStrikePrices, generateExpirationDates, 
 import { addIndicatorsToData } from './utils/technicalIndicators';
 import { calculateOptionPnL } from './utils/blackScholes';
 import vixData from './data/vix_historical.json';
+import spyData from './data/spy_historical.json';
 
 // Initialize historical data on app load
 initializeHistoricalData(['GOOGL', 'META', 'AMZN', 'NVDA', 'PLTR', 'SPY', 'mock_1', 'mock_2', 'mock_3']);
@@ -66,6 +67,9 @@ function App() {
 
   // Get current VIX value by matching date
   const currentVIX = vixData.find(v => v.date === currentDate)?.close || null;
+
+  // Get current SPY value by matching date
+  const currentSPY = spyData.find(p => p.date === currentDate)?.close || null;
 
   const [strikes, setStrikes] = useState(() => generateStrikePrices(currentPrice));
   const [expirations, setExpirations] = useState(() => generateExpirationDates(currentDate));
@@ -332,7 +336,9 @@ function App() {
           {currentVIX !== null && (
             <span className="vix">VIX: {currentVIX.toFixed(2)}</span>
           )}
-          <span className="date">{currentDate}</span>
+          {currentSPY !== null && (
+            <span className="vix">SPY: {currentSPY.toFixed(2)}</span>
+          )}
         </div>
       </header>
 
