@@ -3,8 +3,8 @@ const STOCK_PARAMS = {
   // SCENARIO 1: MAX_CRASH - 80% drawdown with multiple fakeouts and bull traps
   // Tests: protective puts, bear spreads, not catching falling knives, hedging timing
   mock_1: {
-    startPrice: 40,
-    endPrice: 200,         // 80% total decline
+    startPrice: 200,
+    endPrice: 500,         // 80% total decline
     volatility: 0.055,     // High daily volatility
     drift: -0.002,         // Strong negative drift
     baseIV: 0.70,          // Very high base IV (fear)
@@ -369,18 +369,18 @@ export function waitForDataLoad() {
 // Generate realistic strike prices around current price
 export function generateStrikePrices(currentPrice, count = 50) {
   const strikes = [];
-  const baseStrike = Math.round(currentPrice / 5) * 5; // Round to nearest $5
+  const baseStrike = Math.round(currentPrice / 10) * 10; // Round to nearest $10
 
   let step = 1;
 
+  if (currentPrice < 15) {
+    step = 0.25;
+  }
   if (currentPrice > 100) {
     step = 5;
   }
-  else if (currentPrice > 1000) {
+  if (currentPrice > 300) {
     step = 10;
-  }
-  else if (currentPrice < 15) {
-    step = 0.25;
   }
 
 
