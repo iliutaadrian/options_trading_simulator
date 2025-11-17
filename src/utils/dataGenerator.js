@@ -114,6 +114,41 @@ const STOCK_PARAMS = {
   }
 };
 
+// Load VIX data for market volatility context
+let vixData = null;
+
+// Attempt to load VIX data asynchronously when the module is first loaded
+async function loadVIXData() {
+  try {
+    // Dynamically import VIX data - fallback to null if not available
+    const response = await fetch(new URL('../data/^vix_historical.json', import.meta.url));
+    if (response.ok) {
+      vixData = await response.json();
+    }
+  } catch (error) {
+    console.warn('Could not load VIX data:', error);
+    vixData = null;
+  }
+}
+
+// Initialize VIX data loading
+loadVIXData();
+
+// Get VIX value for a specific date
+function getVIXValue(dateStr) {
+  if (!vixData || vixData.length === 0) {
+    return null; // Return null if VIX data is not available
+  }
+
+  // Find the VIX value for the exact date
+  const vixEntry = vixData.find(v => v.date === dateStr);
+  if (vixEntry && vixEntry.close) {
+    return vixEntry.close / 100; // Convert from percentage to decimal (e.g., 25.5 -> 0.255)
+  }
+
+  return null;
+}
+
 // Calculate Garman-Klass volatility (superior for real market data)
 function calculateGarmanKlassVol(priceData, startIndex, window = 20) {
   if (startIndex < window) return null;
@@ -141,28 +176,41 @@ function isCrisisPeriod(dateStr) {
   return dateStr >= '2020-02-20' && dateStr <= '2020-03-31';
 }
 
-// Calculate dynamic IV based on recent price volatility and market events
+// Calculate dynamic IV based on recent price volatility, market events, and VIX
 function calculateDynamicIV(data, index, params) {
   const baseIV = params.baseIV || 0.30;
   const lookback = 20; // 20-day lookback for realized volatility
 
+  // Get VIX value for current date to inform stock IV
+  const currentVIX = getVIXValue(data[index].date);
+
   // For real historical data with IV already set, enhance it
   if (data[index].iv && data[index].iv > 0) {
-    // Use existing IV but enhance with realized vol component
+    // Use existing IV but enhance with realized vol and VIX components
     const gkVol = calculateGarmanKlassVol(data, index, 20);
+    let iv = data[index].iv;
+
     if (gkVol) {
       // Blend existing IV with calculated volatility
-      let iv = data[index].iv * 0.7 + gkVol * 0.3;
-
-      // Add crisis spike if in COVID period
-      if (isCrisisPeriod(data[index].date)) {
-        // Enhance IV during crisis
-        iv = Math.min(0.75, iv * 1.3);
-      }
-
-      return Math.max(0.25, Math.min(0.75, iv));
+      iv = iv * 0.6 + gkVol * 0.4;
     }
-    return data[index].iv;
+
+    // Adjust based on VIX if available
+    if (currentVIX) {
+      // Calculate ratio of current VIX to typical VIX levels (historical average ~20%)
+      const vixRatio = currentVIX / 0.20;
+      // Apply VIX adjustment but with limited impact (30% max influence)
+      const vixAdjustment = (vixRatio - 1.0) * 0.30;
+      iv *= (1 + vixAdjustment);
+    }
+
+    // Add crisis spike if in COVID period
+    if (isCrisisPeriod(data[index].date)) {
+      // Enhance IV during crisis
+      iv = Math.min(0.75, iv * 1.3);
+    }
+
+    return Math.max(0.25, Math.min(0.75, iv));
   }
 
   // For synthetic/mock data, calculate from scratch
@@ -183,6 +231,15 @@ function calculateDynamicIV(data, index, params) {
 
   // Start with base IV influenced by realized volatility
   let iv = baseIV * 0.6 + realizedVol * 0.4;
+
+  // Adjust based on VIX if available
+  if (currentVIX) {
+    // Calculate ratio of current VIX to typical VIX levels (historical average ~20%)
+    const vixRatio = currentVIX / 0.20;
+    // Apply VIX adjustment but with limited impact (20% max influence for synthetic data)
+    const vixAdjustment = (vixRatio - 1.0) * 0.20;
+    iv *= (1 + vixAdjustment);
+  }
 
   // Check for nearby events (within 30 days)
   const currentDate = new Date(data[index].date);
@@ -408,19 +465,18 @@ export function generateStrikePrices(currentPrice, count = 50) {
   const strikes = [];
   const baseStrike = Math.round(currentPrice / 10) * 10; // Round to nearest $10
 
-  let step = 1;
+  // Determine step size based on exchange standards
+  let step = 1; // Default for $25-$200 range
 
-  if (currentPrice < 15) {
-    step = 0.25;
+  if (currentPrice < 25) {
+    step = 0.50; // $0.50 increments for stocks under $25
+  } else if (currentPrice >= 25 && currentPrice < 200) {
+    step = 1.00; // $1.00 increments for stocks $25-$200
+  } else if (currentPrice >= 200 && currentPrice < 500) {
+    step = 2.50; // $2.50 increments for stocks $200-$500
+  } else if (currentPrice >= 500) {
+    step = 5.00; // $5.00 increments for stocks over $500
   }
-  if (currentPrice > 100) {
-    step = 5;
-  }
-  if (currentPrice > 300) {
-    step = 10;
-  }
-
-
 
   for (let i = -count / 2; i <= count / 2; i++) {
     strikes.push(baseStrike + (i * step));
