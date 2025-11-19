@@ -173,7 +173,10 @@ function calculateGarmanKlassVol(priceData, startIndex, window = 20) {
 
 // Detect if date is in crisis period (COVID crash: Feb-March 2020)
 function isCrisisPeriod(dateStr) {
-  return dateStr >= '2020-02-20' && dateStr <= '2020-03-31';
+  if( dateStr >= '2020-02-20' && dateStr <= '2020-03-31') {
+    return true;
+  }
+
 }
 
 // Calculate dynamic IV based on recent price volatility, market events, and VIX
@@ -200,7 +203,7 @@ function calculateDynamicIV(data, index, params) {
       // Calculate ratio of current VIX to typical VIX levels (historical average ~20%)
       const vixRatio = currentVIX / 0.20;
       // Apply VIX adjustment but with limited impact (30% max influence)
-      const vixAdjustment = (vixRatio - 1.0) * 0.30;
+      const vixAdjustment = (vixRatio - 1.0) * 0.50;
       iv *= (1 + vixAdjustment);
     }
 
@@ -318,7 +321,7 @@ async function loadHistoricalData(symbol) {
 
       // Apply calculateDynamicIV to all data points for consistency
       // This ensures IV is calculated using the unified method
-      const params = { baseIV: 0.30, events: [] };
+      const params = { baseIV: 0.40, events: [] };
       for (let i = 0; i < data.length; i++) {
         data[i].iv = calculateDynamicIV(data, i, params);
       }
@@ -470,12 +473,14 @@ export function generateStrikePrices(currentPrice, count = 50) {
 
   if (currentPrice < 25) {
     step = 0.50; // $0.50 increments for stocks under $25
-  } else if (currentPrice >= 25 && currentPrice < 200) {
+  } else if (currentPrice >= 25 && currentPrice < 100) {
     step = 1.00; // $1.00 increments for stocks $25-$200
+  } else if (currentPrice >= 100 && currentPrice < 200) {
+    step =2.5; 
   } else if (currentPrice >= 200 && currentPrice < 500) {
-    step = 2.50; // $2.50 increments for stocks $200-$500
+    step = 5; 
   } else if (currentPrice >= 500) {
-    step = 5.00; // $5.00 increments for stocks over $500
+    step = 10.00;
   }
 
   for (let i = -count / 2; i <= count / 2; i++) {

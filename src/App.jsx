@@ -178,11 +178,11 @@ function App() {
     positions.forEach((position, index) => {
       const expiryDate = new Date(position.expiration);
 
-      // If current date is on or after expiration, auto-close position
-      if (currentDateObj >= expiryDate) {
-        // Use setTimeout to avoid state update during render
-        setTimeout(() => handleClosePosition(index), 0);
-      }
+      // // If current date is on or after expiration, auto-close position
+      // if (currentDateObj >= expiryDate) {
+      //   // Use setTimeout to avoid state update during render
+      //   setTimeout(() => handleClosePosition(index), 0);
+      // }
     });
   }, [currentDate, positions.length]);
 
