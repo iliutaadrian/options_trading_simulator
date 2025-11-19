@@ -479,6 +479,72 @@ body {
   accent-color: #00aa66;
 }
 
+.stock-trade-section {
+  background: #1e2940;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #4a5568;
+  margin-bottom: 1.5rem;
+  border-left: 3px solid #d4af37; /* Gold border to distinguish from options */
+}
+
+.stock-trade-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.stock-trade-header h3 {
+  color: #d4af37;
+  font-size: 1.1rem;
+}
+
+.stock-price-display {
+  font-size: 0.9rem;
+  color: #888;
+}
+
+.current-price {
+  color: #00ff88;
+  font-weight: 600;
+}
+
+.stock-trade-controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.stock-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.stock-input-group label {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.stock-size-input, .stock-price-input {
+  width: 100px;
+  padding: 0.5rem;
+  background: #161d30;
+  border: 1px solid #2a3552;
+  color: #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.stock-size-input:focus, .stock-price-input:focus {
+  outline: none;
+  border-color: #00d4ff;
+  background: #232f4a;
+}
+
 .option-tabs {
   display: flex;
   gap: 0.5rem;

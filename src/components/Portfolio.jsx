@@ -1,24 +1,32 @@
 import React from 'react';
-import { calculateOptionPnL } from '../utils/blackScholes';
+import { calculateOptionPnL, calculateStockPnL } from '../utils/blackScholes';
 
 const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePosition, closedPositions = [] }) => {
   // Calculate current values and P&L for all positions
   const positionMetrics = positions.map((position, index) => {
-    const expiryDate = new Date(position.expiration);
-    const currentDateObj = new Date(currentDate);
-    const daysToExpiry = Math.max(0, Math.floor((expiryDate - currentDateObj) / (1000 * 60 * 60 * 24)));
+    let metrics;
+    if (position.type === 'stock') {
+      // For stock positions, use stock P&L calculation
+      metrics = calculateStockPnL(position, currentPrice, currentDate);
+    } else {
+      // For options positions
+      const expiryDate = new Date(position.expiration);
+      const currentDateObj = new Date(currentDate);
+      const daysToExpiry = Math.max(0, Math.floor((expiryDate - currentDateObj) / (1000 * 60 * 60 * 24)));
 
-    // Use current market IV for position valuation (more realistic)
-    const metrics = calculateOptionPnL(
-      { ...position, daysToExpiry, volatility: currentIV },
-      currentPrice,
-      currentDate
-    );
+      // Use current market IV for position valuation (more realistic)
+      metrics = calculateOptionPnL(
+        { ...position, daysToExpiry, volatility: currentIV },
+        currentPrice,
+        currentDate
+      );
+    }
 
     return {
       ...position,
-      index,
-      daysToExpiry,
+      originalIndex: index, // Store the original index
+      daysToExpiry: position.type !== 'stock' ?
+        Math.max(0, Math.floor((new Date(position.expiration) - new Date(currentDate)) / (1000 * 60 * 60 * 24))) : null,
       ...metrics
     };
   });
@@ -37,19 +45,35 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
   // Calculate portfolio Greeks with correct multipliers
   // Buy Call: +1, Sell Call: -1, Buy Put: -1, Sell Put: +1
   // (Puts are naturally negative delta, so buy put = negative position)
+  // For stocks, Delta = quantity * (1 for long, -1 for short), others are 0
   const portfolioGreeks = positionMetrics.reduce((acc, p) => {
-    let multiplier;
-    if (p.type === 'call') {
-      multiplier = p.action === 'buy' ? 1 : -1;
+    let greeks = { delta: 0, gamma: 0, theta: 0, vega: 0 };
+
+    if (p.type === 'stock') {
+      // For stock, the delta is the number of shares (1 per share)
+      greeks.delta = p.quantity * (p.action === 'buy' ? 1 : -1);
+      // Other Greeks are 0 for stocks
     } else {
-      multiplier = p.action === 'buy' ? 1 : 1;
+      let multiplier;
+      if (p.type === 'call') {
+        multiplier = p.action === 'buy' ? 1 : -1;
+      } else {
+        multiplier = p.action === 'buy' ? -1 : 1;
+      }
+
+      greeks = {
+        delta: p.greeks.delta * p.contracts * 100 * multiplier,
+        gamma: p.greeks.gamma * p.contracts * 100 * multiplier,
+        theta: p.greeks.theta * p.contracts * 100 * multiplier,
+        vega: p.greeks.vega * p.contracts * 100 * multiplier
+      };
     }
 
     return {
-      delta: acc.delta + (p.greeks.delta * p.contracts * 100 * multiplier),
-      gamma: acc.gamma + (p.greeks.gamma * p.contracts * 100 * multiplier),
-      theta: acc.theta + (p.greeks.theta * p.contracts * 100 * multiplier),
-      vega: acc.vega + (p.greeks.vega * p.contracts * 100 * multiplier)
+      delta: acc.delta + greeks.delta,
+      gamma: acc.gamma + greeks.gamma,
+      theta: acc.theta + greeks.theta,
+      vega: acc.vega + greeks.vega
     };
   }, { delta: 0, gamma: 0, theta: 0, vega: 0 });
 
@@ -108,14 +132,26 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
             </thead>
             <tbody>
               {positionMetrics.map((pos) => {
-                // Calculate position multiplier for display
-                let positionMultiplier;
-                if (pos.type === 'call') {
+                let positionDelta, positionTheta, positionGamma, positionVega, positionMultiplier;
+
+                if (pos.type === 'stock') {
+                  positionDelta = pos.quantity * (pos.action === 'buy' ? 1 : -1);
+                  positionTheta = 0;
+                  positionGamma = 0;
+                  positionVega = 0;
                   positionMultiplier = pos.action === 'buy' ? 1 : -1;
                 } else {
-                  positionMultiplier = pos.action === 'buy' ? -1 : 1;
+                  // Calculate position multiplier for display
+                  if (pos.type === 'call') {
+                    positionMultiplier = pos.action === 'buy' ? 1 : -1;
+                  } else {
+                    positionMultiplier = pos.action === 'buy' ? -1 : 1;
+                  }
+                  positionDelta = pos.greeks.delta * positionMultiplier;
+                  positionTheta = pos.greeks.theta;
+                  positionGamma = pos.greeks.gamma;
+                  positionVega = pos.greeks.vega;
                 }
-                const positionDelta = pos.greeks.delta * positionMultiplier;
 
                 return (
                   <tr key={pos.id}>
@@ -124,22 +160,22 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
                         {pos.action === 'buy' ? '+' : '-'}{pos.type[0].toUpperCase()}
                       </span>
                     </td>
-                    <td>${pos.strike}</td>
-                    <td>{pos.contracts}</td>
+                    <td>{pos.strike ? `$${pos.strike}` : 'N/A'}</td>
+                    <td>{pos.type === 'stock' ? pos.quantity : pos.contracts}</td>
                     <td>${pos.entryPrice.toFixed(2)}</td>
                     <td>${pos.currentPrice.toFixed(2)}</td>
                     <td className={pos.pnl >= 0 ? 'profit' : 'loss'}>
                       ${pos.pnl.toFixed(2)} ({pos.pnlPercent.toFixed(1)}%)
                     </td>
-                    <td>{pos.daysToExpiry}</td>
+                    <td>{pos.type !== 'stock' ? pos.daysToExpiry : 'N/A'}</td>
                     <td title={`Multiplier: ${positionMultiplier}`}>{positionDelta.toFixed(2)}</td>
-                    <td>{pos.greeks.theta.toFixed(2)}</td>
-                    <td>{pos.greeks.gamma.toFixed(4)}</td>
-                    <td>{pos.greeks.vega.toFixed(2)}</td>
+                    <td>{positionTheta.toFixed(2)}</td>
+                    <td>{positionGamma.toFixed(4)}</td>
+                    <td>{positionVega.toFixed(2)}</td>
                     <td>
                       <button
                         className="close-btn"
-                        onClick={() => onClosePosition(pos.index)}
+                        onClick={() => onClosePosition(pos.originalIndex)}
                         title="Close Position"
                       >
                         ✕

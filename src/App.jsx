@@ -5,7 +5,7 @@ import OptionsChain from './components/OptionsChain';
 import Portfolio from './components/Portfolio';
 import { generateHistoricalData, generateStrikePrices, generateExpirationDates, getHistoricalData, initializeHistoricalData, waitForDataLoad, calculateIVRank } from './utils/dataGenerator';
 import { addIndicatorsToData } from './utils/technicalIndicators';
-import { calculateOptionPnL } from './utils/blackScholes';
+import { calculateOptionPnL, calculateStockPnL } from './utils/blackScholes';
 import vixData from './data/^vix_historical.json';
 import spyData from './data/spy_historical.json';
 import tnxData from './data/^tnx_historical.json';
@@ -263,6 +263,15 @@ function App() {
     }
   };
 
+  const handleStockTradeClick = (tradeData) => {
+    // If confirmation not required, execute immediately
+    if (!tradeData.requireConfirmation) {
+      handleExecuteStockTrade(tradeData.quantity, tradeData);
+    } else {
+      setTradeModalData(tradeData);
+    }
+  };
+
   const handleExecuteTrade = (contracts, tradeDataOverride = null) => {
     const tradeData = tradeDataOverride || tradeModalData;
     if (!tradeData || !currentData) return;
@@ -285,20 +294,46 @@ function App() {
     setTradeModalData(null);
   };
 
+  const handleExecuteStockTrade = (quantity, tradeDataOverride = null) => {
+    const tradeData = tradeDataOverride || tradeModalData;
+    if (!tradeData || !currentData) return;
+
+    const newPosition = {
+      id: Date.now() + Math.random(),
+      type: 'stock',
+      action: tradeData.action,
+      quantity: quantity,
+      entryPrice: tradeData.price,
+      entryDate: currentDate,
+      entryStockPrice: currentPrice,
+      volatility: currentIV, // Use current IV at time of trade
+      riskFreeRate: currentRiskFreeRate
+    };
+
+    setPositions(prev => [...prev, newPosition]);
+    setTradeModalData(null);
+  };
+
   const handleClosePosition = (index) => {
     const positionToClose = positions[index];
     if (!positionToClose) return;
 
-    // Calculate final P&L at closing
-    const expiryDate = new Date(positionToClose.expiration);
-    const currentDateObj = new Date(currentDate);
-    const daysToExpiry = Math.max(0, Math.floor((expiryDate - currentDateObj) / (1000 * 60 * 60 * 24)));
+    let metrics;
+    if (positionToClose.type === 'stock') {
+      // For stock positions, use stock P&L calculation
+      metrics = calculateStockPnL(positionToClose, currentPrice, currentDate);
+    } else {
+      // For option positions
+      const expiryDate = new Date(positionToClose.expiration);
+      const currentDateObj = new Date(currentDate);
+      const daysToExpiry = Math.max(0, Math.floor((expiryDate - currentDateObj) / (1000 * 60 * 60 * 24)));
 
-    const metrics = calculateOptionPnL(
-      { ...positionToClose, daysToExpiry, volatility: currentIV },
-      currentPrice,
-      currentDate
-    );
+      metrics = calculateOptionPnL(
+        { ...positionToClose, daysToExpiry, volatility: currentIV },
+        currentPrice,
+        currentDate
+      );
+    }
 
     // Store closed position with realized P&L
     const closedPosition = {
@@ -389,6 +424,7 @@ function App() {
                 selectedExpiration={selectedExpiration}
                 onExpirationChange={setSelectedExpiration}
                 onTrade={handleTradeClick}
+                onStockTrade={handleStockTradeClick}
                 riskFreeRate={currentRiskFreeRate}
               />
 
@@ -413,17 +449,32 @@ function App() {
               {tradeModalData.action.toUpperCase()} {tradeModalData.type.toUpperCase()}
             </h3>
             <div className="modal-content">
-              <p><strong>Strike:</strong> ${tradeModalData.strike}</p>
-              <p><strong>Price:</strong> ${tradeModalData.price.toFixed(2)} per contract</p>
-              <p><strong>Contracts:</strong> {tradeModalData.contracts || 1}</p>
-              <p><strong>Total Cost:</strong> ${(tradeModalData.price * (tradeModalData.contracts || 1) * 100).toFixed(2)}</p>
-              <p><strong>Expiration:</strong> {selectedExpiration}</p>
+              {tradeModalData.type === 'stock' ? (
+                <>
+                  <p><strong>Quantity:</strong> {tradeModalData.quantity}</p>
+                  <p><strong>Price:</strong> ${tradeModalData.price.toFixed(2)} per share</p>
+                  <p><strong>Total Cost:</strong> ${(tradeModalData.price * tradeModalData.quantity).toFixed(2)}</p>
+                  <p><strong>Type:</strong> Stock</p>
+                </>
+              ) : (
+                <>
+                  <p><strong>Strike:</strong> ${tradeModalData.strike}</p>
+                  <p><strong>Price:</strong> ${tradeModalData.price.toFixed(2)} per contract</p>
+                  <p><strong>Contracts:</strong> {tradeModalData.contracts || 1}</p>
+                  <p><strong>Total Cost:</strong> ${(tradeModalData.price * (tradeModalData.contracts || 1) * 100).toFixed(2)}</p>
+                  <p><strong>Expiration:</strong> {selectedExpiration}</p>
+                </>
+              )}
 
               <div className="modal-buttons">
                 <button
                   className="btn-primary"
                   onClick={() => {
-                    handleExecuteTrade(tradeModalData.contracts || 1);
+                    if (tradeModalData.type === 'stock') {
+                      handleExecuteStockTrade(tradeModalData.quantity);
+                    } else {
+                      handleExecuteTrade(tradeModalData.contracts || 1);
+                    }
                   }}
                 >
                   Execute Trade

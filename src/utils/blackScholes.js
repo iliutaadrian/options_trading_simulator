@@ -175,3 +175,24 @@ export function calculateOptionPnL(position, currentPrice, currentDate) {
     greeks: currentMetrics
   };
 }
+
+// Calculate P&L for a stock position
+export function calculateStockPnL(position, currentPrice, currentDate) {
+  const currentValue = currentPrice * position.quantity;
+  const initialValue = position.entryPrice * position.quantity;
+
+  let pnl;
+  if (position.action === 'buy') {
+    pnl = currentValue - initialValue;
+  } else {
+    // For short stock positions, profit when price decreases
+    pnl = initialValue - currentValue;
+  }
+
+  return {
+    currentPrice: currentPrice,
+    currentValue: parseFloat(currentValue.toFixed(2)),
+    pnl: parseFloat(pnl.toFixed(2)),
+    pnlPercent: parseFloat(((pnl / initialValue) * 100).toFixed(2))
+  };
+}

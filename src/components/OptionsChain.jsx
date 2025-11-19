@@ -9,12 +9,19 @@ const OptionsChain = ({
   selectedExpiration,
   onExpirationChange,
   onTrade,
+  onStockTrade,
   riskFreeRate = 0.045
 }) => {
   const [activeTab, setActiveTab] = useState('calls');
   const [defaultContracts, setDefaultContracts] = useState(10);
   const [requireConfirmation, setRequireConfirmation] = useState(false);
+  const [stockPrice, setStockPrice] = useState(currentPrice);
   const tableContainerRef = useRef(null);
+
+  // Update stock price when current price changes
+  useEffect(() => {
+    setStockPrice(currentPrice);
+  }, [currentPrice]);
 
   // Auto-scroll to ATM (at-the-money) strike when strikes or price changes
   useEffect(() => {
@@ -70,11 +77,11 @@ const OptionsChain = ({
     const rowClass = atm ? 'atm' : (itm ? 'itm' : 'otm');
 
     if (isNaN(data.delta) ||
-        data.price < 0.01 ||
-        Math.abs(data.delta) < 0.001 ||
-        Math.abs(data.delta) > 0.999 ||
-        Math.abs(data.delta - 1) < 0.001 ||
-        Math.abs(data.delta + 1) < 0.001) {
+      data.price < 0.01 ||
+      Math.abs(data.delta) < 0.001 ||
+      Math.abs(data.delta) > 0.999 ||
+      Math.abs(data.delta - 1) < 0.001 ||
+      Math.abs(data.delta + 1) < 0.001) {
       return null;
     }
 
@@ -178,6 +185,73 @@ const OptionsChain = ({
         </div>
       </div>
 
+      {/* Stock Trading Section */}
+      <div className="stock-trade-section">
+        <div className="stock-trade-controls">
+          <div className="stock-input-group">
+            <label htmlFor="stock-size">Size:</label>
+            <input
+              type="number"
+              id="stock-size"
+              min="1"
+              max="100000"
+              defaultValue={100}
+              className="stock-size-input"
+            />
+          </div>
+          <div className="stock-input-group">
+            <label htmlFor="stock-price">Price:</label>
+            <input
+              type="number"
+              id="stock-price"
+              min="0.01"
+              step="0.01"
+              value={stockPrice}
+              onChange={(e) => setStockPrice(parseFloat(e.target.value) || currentPrice)}
+              className="stock-price-input"
+            />
+          </div>
+          <div className="stock-input-group">
+            <button
+              className="trade-btn buy-btn"
+              onClick={() => {
+                const sizeInput = document.getElementById('stock-size');
+                const size = parseInt(sizeInput.value) || 100;
+                const price = stockPrice;
+                onStockTrade({
+                  type: 'stock',
+                  action: 'buy',
+                  price: price,
+                  quantity: size,
+                  requireConfirmation
+                });
+              }}
+            >
+              Buy Stock
+            </button>
+          </div>
+          <div className="stock-input-group">
+            <button
+              className="trade-btn sell-btn"
+              onClick={() => {
+                const sizeInput = document.getElementById('stock-size');
+                const size = parseInt(sizeInput.value) || 100;
+                const price = stockPrice;
+                onStockTrade({
+                  type: 'stock',
+                  action: 'sell',
+                  price: price,
+                  quantity: size,
+                  requireConfirmation
+                });
+              }}
+            >
+              Sell Stock
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="option-tabs">
         <button
           className={`tab ${activeTab === 'calls' ? 'active' : ''}`}
@@ -199,7 +273,7 @@ const OptionsChain = ({
             <tr>
               <th>Strike</th>
               <th>Price</th>
-              <th>RoR</th> 
+              <th>RoR</th>
               <th>Delta</th>
               <th>Gamma</th>
               <th>Theta</th>
@@ -218,7 +292,7 @@ const OptionsChain = ({
               const nextItm = nextStrike ? isITM(nextStrike, activeTab === 'calls' ? 'call' : 'put') : currentItm;
 
               // Show divider when transitioning from ITM to OTM or vice versa
-              if (row &&currentItm !== nextItm && nextStrike) {
+              if (row && currentItm !== nextItm && nextStrike) {
                 return (
                   <React.Fragment key={`${strike}-${activeTab}`}>
                     {row}
