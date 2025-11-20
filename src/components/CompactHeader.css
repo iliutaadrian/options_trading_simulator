@@ -1,0 +1,137 @@
+.compact-header-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #1a1f3a 0%, #0f1628 100%);
+    border-bottom: 1px solid #2a3552;
+    z-index: 999;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+}
+
+.compact-header-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    padding-top: max(8px, env(safe-area-inset-top));
+    height: 60px;
+}
+
+.market-indicators-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 0 16px 8px 16px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.market-indicators-scroll::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
+}
+
+.indicator-chip {
+    flex: 0 0 auto;
+    background: rgba(30, 41, 64, 0.6);
+    border: 1px solid #2a3552;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+}
+
+.indicator-chip.high-iv {
+    border-color: rgba(255, 85, 85, 0.5);
+    background: rgba(255, 85, 85, 0.1);
+}
+
+.indicator-label {
+    color: #888;
+    font-weight: 600;
+}
+
+.indicator-value {
+    color: #00d4ff;
+    font-weight: 700;
+}
+
+.symbol-badge {
+    background: rgba(0, 212, 255, 0.15);
+    color: #00d4ff;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+}
+
+.symbol-badge:active {
+    transform: scale(0.95);
+    background: rgba(0, 212, 255, 0.25);
+}
+
+.change-icon {
+    font-size: 10px;
+    opacity: 0.7;
+}
+
+.compact-header-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.current-price-display {
+    font-size: 24px;
+    font-weight: 800;
+    color: #00ff88;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
+.price-change-compact {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.price-change-compact.positive {
+    color: #00ff88;
+    background: rgba(0, 255, 136, 0.1);
+}
+
+.price-change-compact.negative {
+    color: #ff4444;
+    background: rgba(255, 68, 68, 0.1);
+}
+
+.account-balance {
+    text-align: right;
+}
+
+.balance-label {
+    font-size: 10px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.balance-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: #00d4ff;
+}

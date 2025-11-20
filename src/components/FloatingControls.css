@@ -1,0 +1,113 @@
+.floating-controls {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 12px;
+    z-index: 998;
+}
+
+.fab-play {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #00d4ff 0%, #0088ff 100%);
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 212, 255, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fab-play.playing {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff4444 100%);
+    box-shadow: 0 4px 16px rgba(255, 68, 68, 0.4);
+}
+
+.fab-play:active {
+    transform: scale(0.9);
+}
+
+.fab-speed {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid #2a3552;
+    background: #1a1f3a;
+    color: #00d4ff;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fab-speed:active {
+    transform: scale(0.95);
+}
+
+.speed-drawer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(26, 31, 58, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid #2a3552;
+    border-radius: 16px;
+    padding: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.speed-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #0f1628;
+    border: 1px solid #2a3552;
+    border-radius: 12px;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 120px;
+}
+
+.speed-option:active {
+    transform: scale(0.95);
+}
+
+.speed-option.active {
+    background: rgba(0, 212, 255, 0.15);
+    border-color: #00d4ff;
+    color: #00d4ff;
+}
+
+.speed-icon {
+    font-size: 20px;
+}
+
+.speed-label {
+    font-size: 14px;
+    font-weight: 600;
+}

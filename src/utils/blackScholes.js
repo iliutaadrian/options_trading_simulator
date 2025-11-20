@@ -178,8 +178,14 @@ export function calculateOptionPnL(position, currentPrice, currentDate) {
 
 // Calculate P&L for a stock position
 export function calculateStockPnL(position, currentPrice, currentDate) {
-  const currentValue = currentPrice * position.quantity;
-  const initialValue = position.entryPrice * position.quantity;
+  // For stock positions, use 'contracts' field which represents the number of shares
+  // For options positions, contracts represents number of contracts (each with 100 shares)
+  // Ensure proper numeric values to avoid NaN
+  const positionContracts = (position.contracts && !isNaN(position.contracts)) ? parseFloat(position.contracts) : 1;
+  const quantity = position.type === 'stock' ? positionContracts : positionContracts * 100;
+
+  const currentValue = currentPrice * quantity;
+  const initialValue = position.entryPrice * quantity;
 
   let pnl;
   if (position.action === 'buy') {
@@ -189,10 +195,13 @@ export function calculateStockPnL(position, currentPrice, currentDate) {
     pnl = initialValue - currentValue;
   }
 
+  // Avoid division by zero for pnlPercent calculation
+  const pnlPercent = initialValue !== 0 ? ((pnl / initialValue) * 100) : 0;
+
   return {
     currentPrice: currentPrice,
     currentValue: parseFloat(currentValue.toFixed(2)),
     pnl: parseFloat(pnl.toFixed(2)),
-    pnlPercent: parseFloat(((pnl / initialValue) * 100).toFixed(2))
+    pnlPercent: parseFloat(pnlPercent.toFixed(2))
   };
 }

@@ -1,0 +1,217 @@
+.portfolio-widget {
+    position: relative;
+    width: 100%;
+    background: linear-gradient(180deg, #1a1f3a 0%, #0f1628 100%);
+    border-top: 1px solid #2a3552;
+    overflow: hidden;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.portfolio-widget-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.widget-summary-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.widget-label {
+    font-size: 12px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.position-count {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e0e0e0;
+}
+
+.widget-summary-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.account-balance {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin-right: 12px;
+}
+
+.balance-label {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.balance-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #e0e0e0;
+}
+
+.total-pnl {
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.total-pnl.profit {
+    color: #00ff88;
+}
+
+.total-pnl.loss {
+    color: #ff4444;
+}
+
+.expand-icon {
+    font-size: 12px;
+    color: #00d4ff;
+}
+
+.portfolio-widget-expanded {
+    padding: 0 20px 20px 20px;
+    max-height: calc(100vh - 210px);
+    overflow-y: auto;
+}
+
+.portfolio-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.stat-item {
+    background: #0a0e27;
+    border: 1px solid #2a3552;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.stat-value.profit {
+    color: #00ff88;
+}
+
+.stat-value.loss {
+    color: #ff4444;
+}
+
+.positions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+    font-size: 14px;
+}
+
+.position-item {
+    background: #0a0e27;
+    border: 1px solid #2a3552;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.position-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.position-type {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.position-type.call {
+    background: rgba(0, 255, 136, 0.2);
+    color: #00ff88;
+}
+
+.position-type.put {
+    background: rgba(255, 68, 68, 0.2);
+    color: #ff4444;
+}
+
+.position-type.stock {
+    background: rgba(0, 212, 255, 0.2);
+    color: #00d4ff;
+}
+
+.position-strike {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffaa00;
+}
+
+.close-position-btn {
+    margin-left: auto;
+    background: rgba(255, 68, 68, 0.2);
+    border: 1px solid rgba(255, 68, 68, 0.3);
+    color: #ff4444;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.close-position-btn:active {
+    transform: scale(0.9);
+    background: rgba(255, 68, 68, 0.3);
+}
+
+.position-details {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+.position-pnl {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.position-pnl .profit {
+    color: #00ff88;
+}
+
+.position-pnl .loss {
+    color: #ff4444;
+}
