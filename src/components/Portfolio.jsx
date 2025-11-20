@@ -43,8 +43,7 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
   );
 
   // Calculate portfolio Greeks with correct multipliers
-  // Buy Call: +1, Sell Call: -1, Buy Put: -1, Sell Put: +1
-  // (Puts are naturally negative delta, so buy put = negative position)
+  // Buy Call: +1, Sell Call: -1, Buy Put: +1, Sell Put: -1
   // For stocks, Delta = quantity * (1 for long, -1 for short), others are 0
   const portfolioGreeks = positionMetrics.reduce((acc, p) => {
     let greeks = { delta: 0, gamma: 0, theta: 0, vega: 0 };
@@ -145,7 +144,8 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
                   if (pos.type === 'call') {
                     positionMultiplier = pos.action === 'buy' ? 1 : -1;
                   } else {
-                    positionMultiplier = pos.action === 'buy' ? -1 : 1;
+                    // For puts: buy put = +1 multiplier, sell put = -1 multiplier
+                    positionMultiplier = pos.action === 'buy' ? 1 : -1;
                   }
                   positionDelta = pos.greeks.delta * positionMultiplier;
                   positionTheta = pos.greeks.theta;
