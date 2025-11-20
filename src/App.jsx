@@ -139,7 +139,7 @@ function App() {
   }, 0);
 
   // Calculate account balance (portfolio value)
-  const accountBalance = 10000 + closedPositions.reduce((sum, p) => sum + p.realizedPnL, 0) + unrealizedPnL;
+  const accountBalance = 50000 + closedPositions.reduce((sum, p) => sum + p.realizedPnL, 0) + unrealizedPnL;
 
   // Playback control
   useEffect(() => {

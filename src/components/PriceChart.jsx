@@ -217,8 +217,7 @@ const PriceChart = ({ data, currentIndex, vixData }) => {
 
                 <span className="chart-type-separator">|</span>
 
-                Timeframe
-                {['1M', '3M', '6M', '1Y'].map((tf) => (
+                {['1M', '3M', '6M'].map((tf) => (
                   <button
                     key={tf}
                     className={`timeframe ${timeframe === tf ? 'active' : ''}`}
@@ -227,29 +226,12 @@ const PriceChart = ({ data, currentIndex, vixData }) => {
                     {tf}
                   </button>
                 ))}
-
-                <span className="chart-type-separator">|</span>
-
-                {/* Chart Type */}
-                {/* {[ */}
-                {/*   { id: 'line', label: 'Line' }, */}
-                {/*   { id: 'bars', label: 'Bars' }, */}
-                {/*   { id: 'candles', label: 'Candles' } */}
-                {/* ].map((ct) => ( */}
-                {/*   <button */}
-                {/*     key={ct.id} */}
-                {/*     className={`chart-type ${chartType === ct.id ? 'active' : ''}`} */}
-                {/*     onClick={() => setChartType(ct.id)} */}
-                {/*   > */}
-                {/*     {ct.label} */}
-                {/*   </button> */}
-                {/* ))} */}
               </div>
             )}
           </div>
         </div>
         <ResponsiveContainer width="100%" height={450}>
-          <ComposedChart data={dataWithVolumeSMA} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <ComposedChart data={dataWithVolumeSMA} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#2962FF" stopOpacity={0.3} />
@@ -268,7 +250,7 @@ const PriceChart = ({ data, currentIndex, vixData }) => {
               interval="preserveStartEnd"
               minTickGap={50}
               tickLine={false}
-              padding={{ left: 10, right: 20 }}
+              padding={{ left: 10, right: 10 }}
             />
             <YAxis
               yAxisId="price"
@@ -511,11 +493,8 @@ const PriceChart = ({ data, currentIndex, vixData }) => {
       </div>
 
       <div className="chart-section tradingview-style">
-        <div className="chart-header">
-          <h3>Volume</h3>
-        </div>
         <ResponsiveContainer width="100%" height={120}>
-          <ComposedChart data={dataWithVolumeSMA} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+          <ComposedChart data={dataWithVolumeSMA} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e2940" strokeWidth={1} />
             <XAxis
               dataKey="date"
@@ -528,7 +507,7 @@ const PriceChart = ({ data, currentIndex, vixData }) => {
               interval="preserveStartEnd"
               minTickGap={50}
               tickLine={false}
-              padding={{ left: 10, right: 20 }}
+              padding={{ left: 10, right: 10 }}
             />
             <YAxis
               tick={{ fill: '#6B7785', fontSize: 11 }}
@@ -553,11 +532,8 @@ const PriceChart = ({ data, currentIndex, vixData }) => {
       </div>
 
       <div className="chart-section tradingview-style">
-        <div className="chart-header">
-          <h3>RSI (14)</h3>
-        </div>
         <ResponsiveContainer width="100%" height={120}>
-          <ComposedChart data={dataWithVolumeSMA} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+          <ComposedChart data={dataWithVolumeSMA} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e2940" strokeWidth={1} />
             <XAxis
               dataKey="date"
@@ -633,88 +609,6 @@ const PriceChart = ({ data, currentIndex, vixData }) => {
         </ResponsiveContainer>
       </div>
 
-      <div className="chart-section tradingview-style">
-        <div className="chart-header">
-          <h3>VIX (Volatility Index)</h3>
-        </div>
-        <ResponsiveContainer width="100%" height={120}>
-          <ComposedChart data={dataWithVolumeSMA} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e2940" strokeWidth={1} />
-            <XAxis
-              dataKey="date"
-              tick={{ fill: '#6B7785', fontSize: 11 }}
-              stroke="#1e2940"
-              tickFormatter={(value) => {
-                const date = new Date(value);
-                return `${date.getMonth() + 1}/${date.getDate()}`;
-              }}
-              interval="preserveStartEnd"
-              minTickGap={50}
-              tickLine={false}
-              padding={{ left: 10, right: 20 }}
-            />
-            <YAxis
-              domain={[0, 'auto']}
-              tick={{ fill: '#6B7785', fontSize: 11 }}
-              stroke="#1e2940"
-              tickLine={false}
-              orientation="right"
-              padding={{ top: 10, bottom: 10 }}
-            />
-            <ReferenceLine
-              y={latestData?.vix}
-              stroke="#FFA726"
-              strokeWidth={1}
-              strokeDasharray="5 5"
-              label={{
-                value: `${latestData?.vix?.toFixed(2) || ''}`,
-                fill: '#FFFFFF',
-                fontSize: 12,
-                fontWeight: 'bold',
-                position: 'right',
-                content: (props) => {
-                  const { viewBox, value } = props;
-                  if (!value) return null;
-                  return (
-                    <g>
-                      <rect
-                        x={viewBox.width + viewBox.x + 5}
-                        y={viewBox.y - 10}
-                        width={45}
-                        height={20}
-                        fill="#FFA726"
-                        rx={4}
-                      />
-                      <text
-                        x={viewBox.width + viewBox.x + 27.5}
-                        y={viewBox.y + 4}
-                        fill="#FFFFFF"
-                        fontSize={12}
-                        fontWeight="bold"
-                        textAnchor="middle"
-                      >
-                        {value}
-                      </text>
-                    </g>
-                  );
-                }
-              }}
-            />
-            <Tooltip cursor={{ stroke: '#4a5568', strokeWidth: 1, strokeDasharray: '5 5' }} />
-            <ReferenceLine y={30} stroke="#F23645" strokeDasharray="3 3" strokeWidth={1} opacity={0.3} label={{ value: 'High Fear', fill: '#F23645', fontSize: 10, position: 'insideTopRight' }} />
-            <ReferenceLine y={20} stroke="#FFA726" strokeDasharray="3 3" strokeWidth={1} opacity={0.3} label={{ value: 'Normal', fill: '#FFA726', fontSize: 10, position: 'insideTopRight' }} />
-            <ReferenceLine y={12} stroke="#089981" strokeDasharray="3 3" strokeWidth={1} opacity={0.3} label={{ value: 'Low Fear', fill: '#089981', fontSize: 10, position: 'insideTopRight' }} />
-            <Line
-              type="monotone"
-              dataKey="vix"
-              stroke="#FFA726"
-              dot={false}
-              strokeWidth={2}
-              name="VIX"
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
     </div>
   );
 };

@@ -205,3 +205,60 @@ export function calculateStockPnL(position, currentPrice, currentDate) {
     pnlPercent: parseFloat(pnlPercent.toFixed(2))
   };
 }
+
+// Calculate portfolio Greeks by aggregating Greeks from all positions
+export function calculatePortfolioGreeks(positions, currentPrice, currentDate, currentIV) {
+  // Initialize total Greeks
+  let totalDelta = 0;
+  let totalGamma = 0;
+  let totalTheta = 0;
+  let totalVega = 0;
+  let totalRho = 0;
+
+  positions.forEach(position => {
+    if (position.type === 'stock') {
+      // For stock positions, delta is 1 for long and -1 for short
+      // Other Greeks are effectively 0 for stocks
+      const contracts = position.contracts || 1;
+      const multiplier = position.action === 'buy' ? 1 : -1;
+
+      // Each share of stock has a delta of 1 relative to the underlying
+      // So total stock delta = number of shares * multiplier
+      totalDelta += contracts * multiplier;
+      // Other Greeks are 0 for stocks
+    } else {
+      // For option positions, calculate Greeks using the option pricing model
+      const expiryDate = new Date(position.expiration);
+      const currentDateObj = new Date(currentDate);
+      const daysToExpiry = Math.max(0, Math.floor((expiryDate - currentDateObj) / (1000 * 60 * 60 * 24)));
+
+      // Calculate Greeks for this option
+      const optionGreeks = calculateOptionMetrics(
+        currentPrice,
+        position.strike,
+        daysToExpiry,
+        position.riskFreeRate || 0.045,
+        position.volatility || currentIV,
+        position.type
+      );
+
+      // Get the number of options (for stocks it's shares, for options it's contracts * 100)
+      const quantity = position.contracts || 1;
+      const multiplier = position.action === 'buy' ? 1 : -1;
+
+      totalDelta += optionGreeks.delta * quantity * 100 * multiplier;
+      totalGamma += optionGreeks.gamma * quantity * 100 * multiplier;
+      totalTheta += optionGreeks.theta * quantity * 100 * multiplier;
+      totalVega += optionGreeks.vega * quantity * 100 * multiplier;
+      totalRho += optionGreeks.rho * quantity * 100 * multiplier;
+    }
+  });
+
+  return {
+    delta: parseFloat(totalDelta.toFixed(2)),
+    gamma: parseFloat(totalGamma.toFixed(4)),
+    theta: parseFloat(totalTheta.toFixed(2)),
+    vega: parseFloat(totalVega.toFixed(2)),
+    rho: parseFloat(totalRho.toFixed(2))
+  };
+}

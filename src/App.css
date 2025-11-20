@@ -352,7 +352,7 @@ input[type="submit"] {
   background: #0a0e27;
   border: 1px solid #1e2940;
   border-radius: 12px;
-  padding: 12px;
+  padding: 5px;
 }
 
 .chart-header {
