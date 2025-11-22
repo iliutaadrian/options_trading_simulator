@@ -1,8 +1,5 @@
 .quick-trade-panel {
-  padding: 16px;
-  padding-bottom: 90px;
-  height: calc(100vh - 60px);
-  overflow-y: auto;
+  padding: 20px 10px;
 }
 
 .quick-trade-header {
