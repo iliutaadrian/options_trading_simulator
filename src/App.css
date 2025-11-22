@@ -22,7 +22,8 @@ body {
 /* Mobile App Container */
 .mobile-app {
   width: 100%;
-  height: 100vh;
+  height: 100dvh;
+  /* Use dynamic viewport height for PWA compatibility */
   max-width: 430px;
   margin: 0 auto;
   background: #0a0e27;
@@ -34,7 +35,8 @@ body {
 /* Fixed Timeline Controls */
 .fixed-timeline-controls {
   position: fixed;
-  top: 100px;
+  top: calc(105px + env(safe-area-inset-top, 0px));
+  /* Account for safe area */
   left: 0;
   right: 0;
   background: #0a0e27;
@@ -141,8 +143,8 @@ body {
 /* Mobile Content Area */
 .mobile-content {
   position: fixed;
-  top: 180px;
-  /* Adjusted for header + compact timeline */
+  top: calc(180px + env(safe-area-inset-top, 0px));
+  /* Adjusted for header + compact timeline + safe area */
   left: 0;
   right: 0;
   bottom: 60px;
@@ -188,7 +190,8 @@ body {
 .portfolio-overlay-content {
   width: 100%;
   max-width: 430px;
-  height: 100vh;
+  height: 100dvh;
+  /* Use dynamic viewport height for PWA */
   background: transparent;
 }
 
@@ -320,7 +323,8 @@ input[type="submit"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  height: 100dvh;
+  /* Use dynamic viewport height for PWA */
   color: #00d4ff;
   font-size: 18px;
 }
