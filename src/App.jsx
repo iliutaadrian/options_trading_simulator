@@ -35,6 +35,7 @@ function App() {
 
   // Stock and date settings
   const [symbol, setSymbol] = useState('META');
+  const [indicatorChart, setIndicatorChart] = useState(null); // null = show main stock chart, otherwise show the selected indicator
   const startDate = '2019-01-01';
   const endDate = '2025-11-14';
 
@@ -88,6 +89,69 @@ function App() {
   const currentTnx = tnxData.find(p => p.date === currentDate)?.close || null;
   const currentRiskFreeRate = currentTnx ? currentTnx / 100 : 0.045;
   const currentIVRank = rawData && currentIndex >= 0 ? calculateIVRank(rawData, currentIndex) : null;
+
+  // Get data for indicator chart if selected
+  const getDataForIndicator = (indicator) => {
+    switch(indicator) {
+      case 'VIX':
+        return addIndicatorsToData(vixData.map(d => ({
+          ...d,
+          close: d.close,
+          high: d.high,
+          low: d.low,
+          open: d.open,
+          volume: d.volume,
+          date: d.date
+        })));
+      case 'SPY':
+        return addIndicatorsToData(spyData.map(d => ({
+          ...d,
+          close: d.close,
+          high: d.high,
+          low: d.low,
+          open: d.open,
+          volume: d.volume,
+          date: d.date
+        })));
+      case 'TNX':
+        return addIndicatorsToData(tnxData.map(d => ({
+          ...d,
+          close: d.close,
+          high: d.high,
+          low: d.low,
+          open: d.open,
+          volume: d.volume,
+          date: d.date
+        })));
+      case 'IVR':
+        // Calculate IVR for each date in the main price data
+        const ivrData = [];
+        const sortedData = [...rawData].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        for (let i = 0; i < sortedData.length; i++) {
+          const ivRank = calculateIVRank(sortedData, i);
+          if (ivRank !== null) {
+            ivrData.push({
+              date: sortedData[i].date,
+              close: ivRank * 100, // Convert to percentage
+              high: ivRank * 100,
+              low: ivRank * 100,
+              open: ivRank * 100,
+              volume: sortedData[i].volume,
+              iv: sortedData[i].iv
+            });
+          } else {
+            // If IVR is null, we can't calculate it, so skip
+            continue;
+          }
+        }
+        return addIndicatorsToData(ivrData);
+      default:
+        return priceData;
+    }
+  };
+
+  const chartData = indicatorChart ? getDataForIndicator(indicatorChart) : priceData;
 
   const [strikes, setStrikes] = useState(() => generateStrikePrices(currentPrice));
   const [expirations, setExpirations] = useState(() => generateExpirationDates(currentDate));
@@ -281,6 +345,16 @@ function App() {
 
   const profitableTrades = closedPositions.filter(p => p.realizedPnL > 0).length;
 
+  const handleIndicatorClick = (indicator) => {
+    if (indicatorChart === indicator) {
+      // If clicking the same indicator, go back to stock chart
+      setIndicatorChart(null);
+    } else {
+      // Otherwise switch to the selected indicator
+      setIndicatorChart(indicator);
+    }
+  };
+
   return (
     <div className="app mobile-app">
       <CompactHeader
@@ -295,6 +369,8 @@ function App() {
         spy={currentSPY}
         tnx={currentRiskFreeRate * 100}
         ivRank={currentIVRank}
+        onIndicatorClick={handleIndicatorClick}
+        onPriceClick={() => setIndicatorChart(null)}
       />
 
       {/* Fixed Timeline Controls */}
@@ -342,7 +418,7 @@ function App() {
       <div className="mobile-content">
         {activeTab === 'chart' && (
           <div className="tab-content">
-            <PriceChart data={priceData} currentIndex={currentIndex} />
+            <PriceChart data={chartData} currentIndex={currentIndex} indicator={indicatorChart} />
           </div>
         )}
 

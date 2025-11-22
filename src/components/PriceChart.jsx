@@ -142,17 +142,29 @@ const BarShape = (props) => {
   );
 };
 
-const CustomTooltip = ({ active, payload }) => {
+const CustomTooltip = ({ active, payload, indicator }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
       <div className="custom-tooltip">
         <p className="label">{data.date}</p>
-        <p>Open: ${data.open}</p>
-        <p>High: ${data.high}</p>
-        <p>Low: ${data.low}</p>
-        <p>Close: ${data.close}</p>
-        <p>Volume: {(data.volume / 1000000).toFixed(2)}M</p>
+        {indicator === 'IVR' ? (
+          <>
+            <p>Value: {data.close}%</p>
+            <p>High: {data.high}%</p>
+            <p>Low: {data.low}%</p>
+            <p>Open: {data.open}%</p>
+            <p>Close: {data.close}%</p>
+          </>
+        ) : (
+          <>
+            <p>Open: ${data.open}</p>
+            <p>High: ${data.high}</p>
+            <p>Low: ${data.low}</p>
+            <p>Close: ${data.close}</p>
+            <p>Volume: {(data.volume / 1000000).toFixed(2)}M</p>
+          </>
+        )}
         {data.rsi && <p>RSI: {data.rsi.toFixed(2)}</p>}
       </div>
     );
@@ -160,7 +172,7 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
-const PriceChart = ({ data, currentIndex, vixData }) => {
+const PriceChart = ({ data, currentIndex, vixData, indicator }) => {
   const [timeframe, setTimeframe] = React.useState('1M');
   const [chartType, setChartType] = React.useState('bars');
 
@@ -199,9 +211,20 @@ const PriceChart = ({ data, currentIndex, vixData }) => {
   // Calculate price change for header
   const latestData = dataWithVolumeSMA[dataWithVolumeSMA.length - 1];
   const previousData = dataWithVolumeSMA[dataWithVolumeSMA.length - 2];
-  const priceChange = latestData && previousData ? latestData.close - previousData.close : 0;
-  const priceChangePercent = previousData ? (priceChange / previousData.close) * 100 : 0;
-  const isPositive = priceChange >= 0;
+  let priceChange = 0;
+  let priceChangePercent = 0;
+  let isPositive = true;
+
+  if (indicator !== 'IVR') {
+    priceChange = latestData && previousData ? latestData.close - previousData.close : 0;
+    priceChangePercent = previousData && previousData.close !== 0 ? (priceChange / previousData.close) * 100 : 0;
+    isPositive = priceChange >= 0;
+  } else {
+    // For IVR, we'll show the change in percentage points
+    priceChange = latestData && previousData ? latestData.close - previousData.close : 0;
+    // For IVR, we just show the change in percentage points (not percentage change)
+    isPositive = priceChange >= 0;
+  }
 
   return (
     <div className="chart-container">
@@ -210,11 +233,17 @@ const PriceChart = ({ data, currentIndex, vixData }) => {
           <div className="chart-title">
             {latestData && (
               <div className="chart-price-info">
-                <span className="current-price">${latestData.close.toFixed(2)}</span>
-                <span className={`price-change ${isPositive ? 'positive' : 'negative'}`}>
-                  {isPositive ? '+' : ''}{priceChange.toFixed(2)} ({isPositive ? '+' : ''}{priceChangePercent.toFixed(2)}%)
+                {indicator && (
+                  <span className="indicator-name">{indicator} </span>
+                )}
+                <span className="current-price">
+                  {indicator === 'IVR' ? `${latestData.close.toFixed(2)}%` : `$${latestData.close.toFixed(2)}`}
                 </span>
-
+                {indicator !== 'IVR' && (
+                  <span className={`price-change ${isPositive ? 'positive' : 'negative'}`}>
+                    {isPositive ? '+' : ''}{priceChange.toFixed(2)} ({isPositive ? '+' : ''}{priceChangePercent.toFixed(2)}%)
+                  </span>
+                )}
                 <span className="chart-type-separator">|</span>
 
                 {['1M', '3M', '6M'].map((tf) => (
@@ -257,7 +286,7 @@ const PriceChart = ({ data, currentIndex, vixData }) => {
               domain={['auto', 'auto']}
               tick={{ fill: '#6B7785', fontSize: 11 }}
               stroke="#1e2940"
-              tickFormatter={(value) => `$${value.toFixed(0)}`}
+              tickFormatter={(value) => indicator === 'IVR' ? `${value.toFixed(0)}%` : `$${value.toFixed(0)}`}
               tickLine={false}
               orientation="right"
               padding={{ top: 10, bottom: 10 }}
@@ -269,7 +298,7 @@ const PriceChart = ({ data, currentIndex, vixData }) => {
               strokeWidth={1}
               strokeDasharray="5 5"
               label={{
-                value: `$${latestData?.close.toFixed(2)}`,
+                value: indicator === 'IVR' ? `${latestData?.close.toFixed(2)}%` : `$${latestData?.close.toFixed(2)}`,
                 fill: '#FFFFFF',
                 fontSize: 13,
                 fontWeight: 'bold',
@@ -281,13 +310,13 @@ const PriceChart = ({ data, currentIndex, vixData }) => {
                       <rect
                         x={viewBox.width + viewBox.x + 5}
                         y={viewBox.y - 12}
-                        width={50}
+                        width={indicator === 'IVR' ? 60 : 50}
                         height={24}
                         fill="#2962FF"
                         rx={4}
                       />
                       <text
-                        x={viewBox.width + viewBox.x + 30}
+                        x={viewBox.width + viewBox.x + (indicator === 'IVR' ? 35 : 30)}
                         y={viewBox.y + 4}
                         fill="#FFFFFF"
                         fontSize={13}
@@ -301,7 +330,7 @@ const PriceChart = ({ data, currentIndex, vixData }) => {
                 }
               }}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#4a5568', strokeWidth: 1, strokeDasharray: '5 5' }} />
+            <Tooltip content={<CustomTooltip indicator={indicator} />} cursor={{ stroke: '#4a5568', strokeWidth: 1, strokeDasharray: '5 5' }} />
 
             {/* Bollinger Bands */}
             <Line
@@ -517,7 +546,7 @@ const PriceChart = ({ data, currentIndex, vixData }) => {
               orientation="right"
               padding={{ top: 10, bottom: 10 }}
             />
-            <Tooltip cursor={{ fill: 'rgba(42, 53, 82, 0.3)' }} />
+            <Tooltip content={<CustomTooltip indicator={indicator} />} cursor={{ fill: 'rgba(42, 53, 82, 0.3)' }} />
             <Bar dataKey="volume" fill="#2962FF" opacity={0.6} />
             <Line
               type="monotone"
@@ -594,7 +623,7 @@ const PriceChart = ({ data, currentIndex, vixData }) => {
                 }
               }}
             />
-            <Tooltip cursor={{ stroke: '#4a5568', strokeWidth: 1, strokeDasharray: '5 5' }} />
+            <Tooltip content={<CustomTooltip indicator={indicator} />} cursor={{ stroke: '#4a5568', strokeWidth: 1, strokeDasharray: '5 5' }} />
             <ReferenceLine y={70} stroke="#F23645" strokeDasharray="3 3" strokeWidth={1} opacity={0.5} />
             <ReferenceLine y={30} stroke="#089981" strokeDasharray="3 3" strokeWidth={1} opacity={0.5} />
             <Line

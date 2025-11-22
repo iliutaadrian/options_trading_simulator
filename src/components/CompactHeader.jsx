@@ -12,7 +12,9 @@ const CompactHeader = ({
     spy,
     tnx,
     ivRank,
-    onBalanceClick
+    onBalanceClick,
+    onIndicatorClick,
+    onPriceClick
 }) => {
     const isPositive = priceChange >= 0;
 
@@ -27,7 +29,7 @@ const CompactHeader = ({
                 </div>
 
                 <div className="compact-header-center">
-                    <div className="current-price-display">
+                    <div className="current-price-display" onClick={onPriceClick} style={{ cursor: 'pointer' }}>
                         ${price.toFixed(2)}
                     </div>
                     <div className={`price-change-compact ${isPositive ? 'positive' : 'negative'}`}>
@@ -46,25 +48,25 @@ const CompactHeader = ({
             {/* Market Indicators Scrollable Row */}
             <div className="market-indicators-scroll">
                 {vix !== null && (
-                    <div className="indicator-chip">
+                    <div className="indicator-chip" onClick={() => onIndicatorClick && onIndicatorClick('VIX')}>
                         <span className="indicator-label">VIX</span>
                         <span className="indicator-value">{vix.toFixed(2)}</span>
                     </div>
                 )}
                 {spy !== null && (
-                    <div className="indicator-chip">
+                    <div className="indicator-chip" onClick={() => onIndicatorClick && onIndicatorClick('SPY')}>
                         <span className="indicator-label">SPY</span>
                         <span className="indicator-value">${spy.toFixed(2)}</span>
                     </div>
                 )}
                 {tnx !== null && (
-                    <div className="indicator-chip">
+                    <div className="indicator-chip" onClick={() => onIndicatorClick && onIndicatorClick('TNX')}>
                         <span className="indicator-label">TNX</span>
                         <span className="indicator-value">{(tnx).toFixed(2)}%</span>
                     </div>
                 )}
                 {ivRank !== null && (
-                    <div className={`indicator-chip ${ivRank >= 0.5 ? 'high-iv' : ''}`}>
+                    <div className={`indicator-chip ${ivRank >= 0.5 ? 'high-iv' : ''}`} onClick={() => onIndicatorClick && onIndicatorClick('IVR')}>
                         <span className="indicator-label">IVR</span>
                         <span className="indicator-value">{(ivRank * 100).toFixed(0)}%</span>
                     </div>

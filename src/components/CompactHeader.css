@@ -24,7 +24,7 @@
     justify-content: space-around;
     overflow-x: auto;
     gap: 8px;
-    padding: 0 16px 8px 16px;
+    padding: 3px 16px 8px 16px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     /* Firefox */
@@ -39,12 +39,12 @@
     flex: 0 0 auto;
     background: rgba(30, 41, 64, 0.6);
     border: 1px solid #2a3552;
-    padding: 2px 8px;
+    padding: 5px 8px;
     border-radius: 4px;
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 11px;
+    font-size: 13px;
 }
 
 .indicator-chip.high-iv {
