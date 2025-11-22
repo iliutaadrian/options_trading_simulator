@@ -42,6 +42,8 @@ Utility Layer:
 
 8. **Auto-Expiration**: useEffect monitors `currentDate` against position expiration dates. When current date >= expiration, automatically closes position and captures final P&L to `closedPositions`.
 
+9. **Mobile Application**: A companion mobile application is available in the `mobile-app/` directory, built using React Native and Expo. The mobile app provides similar options trading simulation functionality optimized for mobile devices, with responsive design and touch-based controls. It shares the same core business logic and data structures with the web application, ensuring consistent behavior across platforms.
+
 ### Important Non-Obvious Details
 
 - **Greeks Interpretation**: Theta shown per-day (annualized/365). Vega per 1% IV change. Portfolio Greeks use buy=+1x, sell=-1x multipliers (useful for spreads).
@@ -57,19 +59,23 @@ Utility Layer:
 
 | Category | Technology |
 |----------|-----------|
-| **Framework** | React 18.2.0 with Hooks |
+| **Frontend Framework** | React 18.2.0 with Hooks |
 | **Build Tool** | Vite 5.0.8 |
-| **Charting** | Recharts 2.10.3 |
+| **Charting Library** | Recharts 2.10.3 |
+| **Mobile Framework** | React Native with Expo |
 | **Deployment** | GitHub Pages |
 | **Module System** | ES Modules |
+| **Development Dependencies** | @types/react, @types/react-dom, @vitejs/plugin-react, gh-pages, vite |
+| **Type Checking** | TypeScript (via @types packages) |
 
 ## Building and Running
 
 ### Prerequisites
 - Node.js (v16 or higher)
 - npm or yarn package manager
+- For mobile app: Expo CLI (install with `npm install -g @expo/cli`)
 
-### Installation
+### Web Application Installation
 ```bash
 # Install dependencies
 npm install
@@ -88,10 +94,25 @@ npm run deploy
 # Automatically runs predeploy (npm run build) first
 ```
 
+### Mobile Application Installation
+```bash
+# Navigate to the mobile app directory
+cd mobile-app/OptionsTradingSimulator
+
+# Install mobile app dependencies
+npm install
+
+# Start Expo development server
+npx expo start
+# Or use the shorthand
+npm start
+```
+
 **Notes:**
 - No test framework configured
 - No linter/formatter configured
-- dev server typically runs on http://localhost:5173
+- Web dev server typically runs on http://localhost:5173
+- Mobile app can be run on iOS/Android simulators or physical devices via Expo Go app
 - Deploy target: `https://iliutaadrian.github.io/options_trading_simulator/`
 
 ## Development Conventions
@@ -155,12 +176,49 @@ npm run deploy
 ### Main Directories
 
 ```
-src/
-├── components/        # React components (697 LOC)
-├── utils/            # Business logic (523 LOC)
-├── data/             # Historical data (googl_historical.json)
-├── App.jsx           # State management hub (300+ LOC)
-└── App.css           # Dark theme styling (1000+ LOC)
+/
+├── .gitignore
+├── CLAUDE.md
+├── QWEN.md
+├── README.md
+├── index.html
+├── package.json
+├── package-lock.json
+├── vite.config.js
+├── .claude/
+│   └── settings.local.json
+├── .vite/
+├── dist/                 # Production build output
+├── docs/                 # Documentation files
+│   ├── csp_protection_bear_market.md
+│   ├── MATHEMATICAL_FORMULAS.md
+│   └── put_selling_plan.md
+├── mobile-app/           # Mobile application (React Native Expo)
+│   └── OptionsTradingSimulator/
+│       ├── app/
+│       ├── assets/
+│       ├── components/
+│       ├── constants/
+│       ├── contexts/
+│       ├── data/
+│       ├── hooks/
+│       ├── scripts/
+│       ├── utils/
+│       └── .expo/, .vscode/ (hidden directories)
+├── node_modules/         # Dependencies
+├── src/                  # Main web application source code
+│   ├── components/       # React components (697 LOC)
+│   ├── data/             # Historical data (googl_historical.json)
+│   ├── utils/            # Business logic utilities (523 LOC)
+│   │   ├── blackScholes.js
+│   │   ├── dataGenerator.js
+│   │   └── technicalIndicators.js
+│   ├── App.jsx           # State management hub (300+ LOC)
+│   ├── App.css           # Dark theme styling (1000+ LOC)
+│   └── main.jsx          # Application entry point
+└── utils/                # Data processing utilities (Python scripts)
+    ├── download_data.py
+    └── README.md
 ```
 
 ### Key Files (Reading Order)
@@ -178,6 +236,17 @@ src/
 6. **`src/components/Portfolio.jsx`** (160+ LOC) - Position tracking with session P&L breakdown (Total, Unrealized, Realized). Shows closed positions count. P&L per position, aggregated portfolio Greeks, close position functionality. Receives `closedPositions` prop for realized P&L calculation.
 
 7. **`src/components/TimeControls.jsx`** - Playback controls: play/pause, speed slider, date display, timeline slider.
+
+### Mobile Application
+
+The project includes a mobile application built with React Native using Expo in the `mobile-app/` directory. The mobile app provides similar options trading simulation functionality optimized for mobile devices.
+
+### Documentation Files
+
+The `docs/` directory contains additional documentation files:
+- `csp_protection_bear_market.md` - Documentation on bear market protection strategies
+- `MATHEMATICAL_FORMULAS.md` - Detailed mathematical formulas used in the application
+- `put_selling_plan.md` - Documentation on put selling strategies
 
 ## Configuration Files
 
