@@ -258,7 +258,7 @@ body {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
   gap: 1.5rem;
-  padding: 0 2rem;
+  padding: 1rem;
   margin-bottom: 2rem;
 }
 
@@ -294,7 +294,7 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
+  padding: 0.5rem;
   border-bottom: 1px solid #1e2940;
 }
 
