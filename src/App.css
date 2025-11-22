@@ -281,16 +281,12 @@ body {
   font-size: 1.2rem;
 }
 
-.chart-section {
-  margin-bottom: 1.5rem;
-}
-
 /* TradingView Style Charts */
 .tradingview-style {
   background: #0a0e27;
   border: 1px solid #1e2940;
   border-radius: 8px;
-  padding: 1rem;
+  padding: 5px;
 }
 
 .chart-header {
@@ -687,12 +683,6 @@ body {
   outline: none;
   border-color: #00d4ff;
   background: #232f4a;
-}
-
-.contracts-input::-webkit-inner-spin-button,
-.contracts-input::-webkit-outer-spin-button {
-  opacity: 1;
-  height: 30px;
 }
 
 .trade-btn {
@@ -1246,6 +1236,18 @@ body {
   .options-info {
     grid-template-columns: 1fr;
   }
+}
+
+/* Indicator Charts Row */
+.indicator-charts-row {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.indicator-chart {
+  flex: 1;
+  min-width: 0; /* Allow flex item to shrink below content size */
 }
 
 /* Loading State */

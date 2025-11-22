@@ -193,7 +193,7 @@ const PriceChart = ({ data, currentIndex }) => {
 
   return (
     <div className="chart-container">
-      <div className="chart-section tradingview-style">
+      <div className="tradingview-style">
         <div className="chart-header">
           <div className="chart-title">
             <h3>Price Chart</h3>
@@ -497,10 +497,7 @@ const PriceChart = ({ data, currentIndex }) => {
         </ResponsiveContainer>
       </div>
 
-      <div className="chart-section tradingview-style">
-        <div className="chart-header">
-          <h3>Volume</h3>
-        </div>
+      <div className="tradingview-style">
         <ResponsiveContainer width="100%" height={120}>
           <ComposedChart data={dataWithVolumeSMA} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e2940" strokeWidth={1} />
@@ -537,10 +534,7 @@ const PriceChart = ({ data, currentIndex }) => {
         </ResponsiveContainer>
       </div>
 
-      <div className="chart-section tradingview-style">
-        <div className="chart-header">
-          <h3>RSI (14)</h3>
-        </div>
+      <div className="tradingview-style">
         <ResponsiveContainer width="100%" height={120}>
           <ComposedChart data={dataWithVolumeSMA} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e2940" strokeWidth={1} />

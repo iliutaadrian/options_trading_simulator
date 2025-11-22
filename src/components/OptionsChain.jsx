@@ -16,11 +16,19 @@ const OptionsChain = ({
   const [defaultContracts, setDefaultContracts] = useState(10);
   const [requireConfirmation, setRequireConfirmation] = useState(false);
   const [stockPrice, setStockPrice] = useState(currentPrice);
+  const [isStockPriceManuallyChanged, setIsStockPriceManuallyChanged] = useState(false);
   const tableContainerRef = useRef(null);
 
-  // Update stock price when current price changes
+  // Update stock price when current price changes (but only if not manually changed)
   useEffect(() => {
-    setStockPrice(currentPrice);
+    if (!isStockPriceManuallyChanged) {
+      setStockPrice(currentPrice);
+    }
+  }, [currentPrice]);
+
+  // Reset manual change flag when current price changes
+  useEffect(() => {
+    setIsStockPriceManuallyChanged(false);
   }, [currentPrice]);
 
   // Auto-scroll to ATM (at-the-money) strike when strikes or price changes
@@ -207,7 +215,10 @@ const OptionsChain = ({
               min="0.01"
               step="0.01"
               value={stockPrice}
-              onChange={(e) => setStockPrice(parseFloat(e.target.value) || currentPrice)}
+              onChange={(e) => {
+                setStockPrice(parseFloat(e.target.value) || currentPrice);
+                setIsStockPriceManuallyChanged(true);
+              }}
               className="stock-price-input"
             />
           </div>

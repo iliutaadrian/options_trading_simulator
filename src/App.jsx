@@ -39,7 +39,7 @@ function App() {
 
   // Generate and process data for the selected symbol
   const [rawData, setRawData] = useState(() => loadDataForSymbol(symbol));
-  const [priceData, setPriceData] = useState(() => addIndicatorsToData(rawData));
+  const [priceData, setPriceData] = useState(() => addIndicatorsToData(rawData, vixData, spyData));
 
   // Wait for historical data to load, then reload if needed
   useEffect(() => {
@@ -48,7 +48,7 @@ function App() {
       const newData = loadDataForSymbol(symbol);
       if (newData && newData.length > 0) {
         setRawData(newData);
-        setPriceData(addIndicatorsToData(newData));
+        setPriceData(addIndicatorsToData(newData, vixData, spyData));
       }
       setDataLoaded(true);
     });
@@ -116,7 +116,7 @@ function App() {
   const handleSymbolChange = (newSymbol) => {
     setSymbol(newSymbol);
     const newRawData = loadDataForSymbol(newSymbol);
-    const newPriceData = addIndicatorsToData(newRawData);
+    const newPriceData = addIndicatorsToData(newRawData, vixData, spyData);
     setRawData(newRawData);
     setPriceData(newPriceData);
     setCurrentIndex(350); // Reset to day 350
@@ -134,12 +134,14 @@ function App() {
       newExpirations[2];
     setSelectedExpiration(thirtyDayExp?.date);
 
-    setPositions([]); // Clear positions when switching stocks
+    setPositions([]); // Clear options positions when switching stocks
+    setStockPosition(null); // Clear stock position when switching stocks
     setClosedPositions([]); // Clear closed positions history
   };
 
   // Trading state
-  const [positions, setPositions] = useState([]);
+  const [positions, setPositions] = useState([]); // Options positions
+  const [stockPosition, setStockPosition] = useState(null); // Single stock position
   const [closedPositions, setClosedPositions] = useState([]);
   const [tradeModalData, setTradeModalData] = useState(null);
 
@@ -298,19 +300,67 @@ function App() {
     const tradeData = tradeDataOverride || tradeModalData;
     if (!tradeData || !currentData) return;
 
-    const newPosition = {
-      id: Date.now() + Math.random(),
-      type: 'stock',
-      action: tradeData.action,
-      quantity: quantity,
-      entryPrice: tradeData.price,
-      entryDate: currentDate,
-      entryStockPrice: currentPrice,
-      volatility: currentIV, // Use current IV at time of trade
-      riskFreeRate: currentRiskFreeRate
-    };
+    setStockPosition(prevStockPosition => {
+      if (prevStockPosition) {
+        // If we already have a stock position, calculate new position based on action
+        if (prevStockPosition.action === tradeData.action) {
+          // Same action (buy + buy or sell + sell): increase position size
+          const totalQuantity = prevStockPosition.quantity + quantity;
+          const totalValue = (prevStockPosition.entryPrice * prevStockPosition.quantity) + (tradeData.price * quantity);
+          const newEntryPrice = totalValue / totalQuantity;
 
-    setPositions(prev => [...prev, newPosition]);
+          return {
+            ...prevStockPosition,
+            quantity: totalQuantity,
+            entryPrice: newEntryPrice
+          };
+        } else {
+          // Opposite action (buy + sell or sell + buy): reduce position or flip
+          const positionDiff = prevStockPosition.quantity - quantity;
+
+          if (positionDiff > 0) {
+            // Reduce position but still holding same direction
+            const totalValue = (prevStockPosition.entryPrice * prevStockPosition.quantity) + (tradeData.price * quantity);
+            const avgEntryPrice = totalValue / (prevStockPosition.quantity + quantity);
+            return {
+              ...prevStockPosition,
+              quantity: positionDiff,
+              entryPrice: avgEntryPrice // Weighted average of entry prices
+            };
+          } else if (positionDiff < 0) {
+            // Flip direction
+            return {
+              id: Date.now() + Math.random(),
+              type: 'stock',
+              action: tradeData.action, // New action that's dominating
+              quantity: Math.abs(positionDiff),
+              entryPrice: tradeData.price,
+              entryDate: currentDate,
+              entryStockPrice: currentPrice,
+              volatility: currentIV,
+              riskFreeRate: currentRiskFreeRate
+            };
+          } else {
+            // Complete offset - no position left
+            return null;
+          }
+        }
+      } else {
+        // No existing position, create new one
+        return {
+          id: Date.now() + Math.random(),
+          type: 'stock',
+          action: tradeData.action,
+          quantity: quantity,
+          entryPrice: tradeData.price,
+          entryDate: currentDate,
+          entryStockPrice: currentPrice,
+          volatility: currentIV,
+          riskFreeRate: currentRiskFreeRate
+        };
+      }
+    });
+
     setTradeModalData(null);
   };
 
@@ -347,13 +397,30 @@ function App() {
     setPositions(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Function to close the single stock position
+  const handleCloseStockPosition = () => {
+    if (!stockPosition) return;
+
+    const metrics = calculateStockPnL(stockPosition, currentPrice, currentDate);
+
+    // Store closed position with realized P&L
+    const closedPosition = {
+      ...stockPosition,
+      closedDate: currentDate,
+      closedPrice: metrics.currentPrice,
+      realizedPnL: metrics.pnl
+    };
+
+    setClosedPositions(prev => [...prev, closedPosition]);
+    setStockPosition(null);
+  };
+
   // Show loading state for real symbols on initial load
   const isLoadingRealData = !dataLoaded && !symbol.startsWith('mock_');
 
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Options Trading Simulator</h1>
         <div className="stock-selector">
           <label>Stock:</label>
           <select value={symbol} onChange={(e) => handleSymbolChange(e.target.value)} disabled={isLoadingRealData}>
@@ -430,10 +497,12 @@ function App() {
 
               <Portfolio
                 positions={positions}
+                stockPosition={stockPosition}
                 currentPrice={currentPrice}
                 currentDate={currentDate}
                 currentIV={currentIV}
                 onClosePosition={handleClosePosition}
+                onCloseStockPosition={handleCloseStockPosition}
                 closedPositions={closedPositions}
               />
             </div>

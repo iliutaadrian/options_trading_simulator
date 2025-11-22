@@ -1,7 +1,7 @@
 import React from 'react';
 import { calculateOptionPnL, calculateStockPnL } from '../utils/blackScholes';
 
-const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePosition, closedPositions = [] }) => {
+const Portfolio = ({ positions, stockPosition, currentPrice, currentDate, currentIV, onClosePosition, onCloseStockPosition, closedPositions = [] }) => {
   // Calculate current values and P&L for all positions
   const positionMetrics = positions.map((position, index) => {
     let metrics;
@@ -31,16 +31,36 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
     };
   });
 
+  // Calculate metrics for the single stock position if it exists
+  let stockPositionMetrics = null;
+  if (stockPosition) {
+    stockPositionMetrics = {
+      ...stockPosition,
+      originalIndex: -1, // Use -1 to indicate it's the stock position
+      ...calculateStockPnL(stockPosition, currentPrice, currentDate)
+    };
+  }
+
   // Calculate realized P&L from closed positions
   const realizedPnL = closedPositions.reduce((sum, p) => sum + p.realizedPnL, 0);
 
-  // Calculate portfolio totals
-  const totalValue = positionMetrics.reduce((sum, p) => sum + p.currentValue, 0);
-  const unrealizedPnL = positionMetrics.reduce((sum, p) => sum + p.pnl, 0);
-  const totalPnL = unrealizedPnL + realizedPnL;
-  const totalInvested = positionMetrics.reduce((sum, p) =>
+  // Calculate portfolio totals - include stock position in calculations
+  let totalValue = positionMetrics.reduce((sum, p) => sum + p.currentValue, 0);
+  let unrealizedPnL = positionMetrics.reduce((sum, p) => sum + p.pnl, 0);
+  let totalInvested = 0;
+
+  // Add stock position metrics if it exists
+  if (stockPositionMetrics) {
+    totalValue += stockPositionMetrics.currentValue;
+    unrealizedPnL += stockPositionMetrics.pnl;
+    totalInvested += stockPositionMetrics.entryPrice * stockPositionMetrics.quantity;
+  }
+
+  totalInvested += positionMetrics.reduce((sum, p) =>
     sum + (p.entryPrice * p.contracts * 100), 0
   );
+
+  const totalPnL = unrealizedPnL + realizedPnL;
 
   // Calculate portfolio Greeks with correct multipliers
   // Buy Call: +1, Sell Call: -1, Buy Put: +1, Sell Put: -1
@@ -57,7 +77,7 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
       if (p.type === 'call') {
         multiplier = p.action === 'buy' ? 1 : -1;
       } else {
-        multiplier = p.action === 'buy' ? -1 : 1;
+        multiplier = p.action === 'buy' ? 1 : -1;
       }
 
       greeks = {
@@ -74,7 +94,12 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
       theta: acc.theta + greeks.theta,
       vega: acc.vega + greeks.vega
     };
-  }, { delta: 0, gamma: 0, theta: 0, vega: 0 });
+  }, {
+    delta: stockPositionMetrics ? stockPositionMetrics.quantity * (stockPositionMetrics.action === 'buy' ? 1 : -1) : 0,
+    gamma: 0,
+    theta: 0,
+    vega: 0
+  });
 
   return (
     <div className="portfolio">
@@ -90,7 +115,7 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
         </div>
         <div className="summary-card">
           <h4>Greeks</h4>
-          <div style={{ fontSize: '15px', marginTop: '0.25rem', display: 'flex', justifyContent: 'space-around' }}>
+          <div style={{ fontSize: '15px', marginTop: '0.25rem', display: 'flex', gap: '15px'}}>
             <div><span style={{fontSize: '20px'}}>Δ</span> {portfolioGreeks.delta.toFixed(2)}</div>
             <div><span style={{fontSize: '20px'}}>Θ</span> {portfolioGreeks.theta.toFixed(2)}</div>
             <div><span style={{fontSize: '20px'}}>Γ</span> {portfolioGreeks.gamma.toFixed(4)} </div>
@@ -99,14 +124,14 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
         </div>
         <div className="summary-card">
           <h4>Positions</h4>
-          <p className="big-number">{positions.length}</p>
+          <p className="big-number">{positions.length + (stockPositionMetrics ? 1 : 0)}</p>
           <div style={{ fontSize: '0.75rem', marginTop: '0.25rem', color: '#888' }}>
             Closed: {closedPositions.length}
           </div>
         </div>
       </div>
 
-      {positions.length === 0 ? (
+      {(positions.length === 0 && !stockPositionMetrics) ? (
         <div className="empty-portfolio">
           <p>No open positions. Start trading to build your portfolio!</p>
         </div>
@@ -130,6 +155,49 @@ const Portfolio = ({ positions, currentPrice, currentDate, currentIV, onClosePos
               </tr>
             </thead>
             <tbody>
+              {stockPositionMetrics && (
+                // Render the single stock position if it exists
+                (() => {
+                  const pos = stockPositionMetrics;
+                  const positionDelta = pos.quantity * (pos.action === 'buy' ? 1 : -1);
+                  const positionTheta = 0;
+                  const positionGamma = 0;
+                  const positionVega = 0;
+                  const positionMultiplier = pos.action === 'buy' ? 1 : -1;
+
+                  return (
+                    <tr key={pos.id}>
+                      <td>
+                        <span className={`option-type ${pos.type}`}>
+                          {pos.action === 'buy' ? '+' : '-'}{pos.type[0].toUpperCase()}
+                        </span>
+                      </td>
+                      <td>N/A</td>
+                      <td>{pos.quantity}</td>
+                      <td>${pos.entryPrice.toFixed(2)}</td>
+                      <td>${pos.currentPrice.toFixed(2)}</td>
+                      <td className={pos.pnl >= 0 ? 'profit' : 'loss'}>
+                        ${pos.pnl.toFixed(2)} ({pos.pnlPercent.toFixed(1)}%)
+                      </td>
+                      <td>N/A</td>
+                      <td title={`Multiplier: ${positionMultiplier}`}>{positionDelta.toFixed(2)}</td>
+                      <td>{positionTheta.toFixed(2)}</td>
+                      <td>{positionGamma.toFixed(4)}</td>
+                      <td>{positionVega.toFixed(2)}</td>
+                      <td>
+                        <button
+                          className="close-btn"
+                          onClick={onCloseStockPosition}
+                          title="Close Stock Position"
+                        >
+                          ✕
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })()
+              )}
+
               {positionMetrics.map((pos) => {
                 let positionDelta, positionTheta, positionGamma, positionVega, positionMultiplier;
 
