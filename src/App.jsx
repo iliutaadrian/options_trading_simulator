@@ -16,6 +16,7 @@ initializeHistoricalData(['GOOGL', 'META', 'AMZN', 'NVDA', 'PLTR', 'SPY', 'mock_
 function App() {
   // Stock and date settings - Data from 2019 to 2025
   const [symbol, setSymbol] = useState('META');
+  const [indicatorSymbol, setIndicatorSymbol] = useState(null); // For VIX, SPY, TNX when selected to be viewed on chart
   const startDate = '2019-01-01';
   const endDate = '2025-11-14';
 
@@ -37,22 +38,63 @@ function App() {
     return data;
   };
 
+  // Helper function to load indicator data
+  const loadIndicatorData = (indicator) => {
+    if (indicator === 'VIX') {
+      return vixData;
+    } else if (indicator === 'SPY') {
+      return spyData;
+    } else if (indicator === 'TNX') {
+      return tnxData;
+    } else if (indicator === 'IVR') {
+      // For IVR, we'll use the current stock's IV data with dates matched to current stock data
+      const stockData = loadDataForSymbol(symbol);
+      return stockData.map(item => ({
+        date: item.date,
+        close: (item.iv * 100) || 0,  // Convert decimal to percentage
+        open: (item.iv * 100) || 0,
+        high: (item.iv * 100) || 0,
+        low: (item.iv * 100) || 0,
+        volume: item.volume
+      }));
+    }
+    return null;
+  };
+
   // Generate and process data for the selected symbol
-  const [rawData, setRawData] = useState(() => loadDataForSymbol(symbol));
-  const [priceData, setPriceData] = useState(() => addIndicatorsToData(rawData, vixData, spyData));
+  const [rawData, setRawData] = useState(() => {
+    if (indicatorSymbol) {
+      return loadIndicatorData(indicatorSymbol);
+    } else {
+      return loadDataForSymbol(symbol);
+    }
+  });
+  const [priceData, setPriceData] = useState(() => {
+    if (indicatorSymbol) {
+      // For indicators, we just add indicators to the indicator data itself
+      return addIndicatorsToData(rawData, vixData, spyData);
+    } else {
+      return addIndicatorsToData(rawData, vixData, spyData);
+    }
+  });
 
   // Wait for historical data to load, then reload if needed
   useEffect(() => {
     waitForDataLoad().then(() => {
       // Data is now loaded, check if we need to reload
-      const newData = loadDataForSymbol(symbol);
+      let newData;
+      if (indicatorSymbol) {
+        newData = loadIndicatorData(indicatorSymbol);
+      } else {
+        newData = loadDataForSymbol(symbol);
+      }
       if (newData && newData.length > 0) {
         setRawData(newData);
         setPriceData(addIndicatorsToData(newData, vixData, spyData));
       }
       setDataLoaded(true);
     });
-  }, []);
+  }, [indicatorSymbol, symbol]);
 
   // Time navigation - Start at day 350 to show 200-day moving average with history
   const [currentIndex, setCurrentIndex] = useState(350);
@@ -62,9 +104,33 @@ function App() {
 
   // Options data
   const currentData = priceData[currentIndex];
-  const currentPrice = currentData?.close || 150;
-  const currentDate = currentData?.date || startDate;
   const currentIV = currentData?.iv || 0.35; // Get dynamic IV from current date
+
+  // Get current stock price (always get the stock price regardless of which indicator is displayed on chart)
+  const getStockPrice = () => {
+    if (!indicatorSymbol) {
+      return currentData?.close || 150; // Use current chart price if not viewing an indicator
+    } else {
+      // If viewing an indicator, get the price from the original stock data at the same index
+      const stockData = loadDataForSymbol(symbol);
+      return stockData[currentIndex]?.close || 150;
+    }
+  };
+  const currentPrice = getStockPrice();
+
+  const currentDate = currentData?.date || startDate;
+
+  // Get current IV for the selected stock (not the indicator if indicator is selected)
+  const currentStockIV = () => {
+    if (!indicatorSymbol) {
+      return currentIV; // Use current IV if not viewing an indicator
+    } else {
+      // If viewing an indicator, get the IV from the original stock data at the same index
+      const stockData = loadDataForSymbol(symbol);
+      return stockData[currentIndex]?.iv || 0.35;
+    }
+  };
+  const currentIVForOptions = currentStockIV();
 
   // Get current VIX value by matching date
   const currentVIX = vixData.find(v => v.date === currentDate)?.close || null;
@@ -77,7 +143,18 @@ function App() {
   const currentRiskFreeRate = currentTnx ? currentTnx / 100 : 0.045; // Default to 4.5% if no data
 
   // Calculate IV Rank for the current stock based on historical IV data
-  const currentIVRank = rawData && currentIndex >= 0 ? calculateIVRank(rawData, currentIndex) : null;
+  // Need to use the stock data, not indicator data
+  const currentIVRank = () => {
+    if (!indicatorSymbol) {
+      // If not viewing an indicator, use the current rawData (stock data)
+      return rawData && currentIndex >= 0 ? calculateIVRank(rawData, currentIndex) : null;
+    } else {
+      // If viewing an indicator, get the IV rank from the original stock data at the same index
+      const stockData = loadDataForSymbol(symbol);
+      return stockData && currentIndex >= 0 ? calculateIVRank(stockData, currentIndex) : null;
+    }
+  };
+  const currentIVRankValue = currentIVRank();
 
   const [strikes, setStrikes] = useState(() => generateStrikePrices(currentPrice));
   const [expirations, setExpirations] = useState(() => generateExpirationDates(currentDate));
@@ -88,9 +165,9 @@ function App() {
     return thirtyDayExp?.date;
   });
 
-  // Update expirations and strikes as time moves forward
+  // Update expirations and strikes as time moves forward (only when viewing stock, not indicators)
   useEffect(() => {
-    if (currentDate) {
+    if (currentDate && !indicatorSymbol) { // Only update when viewing stock, not indicators
       const newExpirations = generateExpirationDates(currentDate);
       setExpirations(newExpirations);
       if (!newExpirations.find(exp => exp.date === selectedExpiration)) {
@@ -101,20 +178,23 @@ function App() {
         setSelectedExpiration(thirtyDayExp?.date);
       }
     }
-  }, [currentDate]);
+  }, [currentDate, indicatorSymbol]);
 
-  // Update strikes when price changes significantly
+  // Update strikes when price changes significantly (only when viewing stock, not indicators)
   useEffect(() => {
-    const currentStrikeCenter = strikes[Math.floor(strikes.length / 2)];
-    const priceDiff = Math.abs(currentPrice - currentStrikeCenter);
-    if (priceDiff > currentPrice * 0.15) { // Update if price moved >15%
-      setStrikes(generateStrikePrices(currentPrice));
+    if (!indicatorSymbol) { // Only update strikes when viewing stock, not indicators
+      const currentStrikeCenter = strikes[Math.floor(strikes.length / 2)];
+      const priceDiff = Math.abs(currentPrice - currentStrikeCenter);
+      if (priceDiff > currentPrice * 0.15) { // Update if price moved >15%
+        setStrikes(generateStrikePrices(currentPrice));
+      }
     }
-  }, [currentPrice]);
+  }, [currentPrice, indicatorSymbol]);
 
   // Handle symbol change
   const handleSymbolChange = (newSymbol) => {
     setSymbol(newSymbol);
+    setIndicatorSymbol(null); // Clear any indicator selection when switching symbols
     const newRawData = loadDataForSymbol(newSymbol);
     const newPriceData = addIndicatorsToData(newRawData, vixData, spyData);
     setRawData(newRawData);
@@ -137,6 +217,27 @@ function App() {
     setPositions([]); // Clear options positions when switching stocks
     setStockPosition(null); // Clear stock position when switching stocks
     setClosedPositions([]); // Clear closed positions history
+  };
+
+  // Handle indicator change
+  const handleIndicatorChange = (indicator) => {
+    setIndicatorSymbol(indicator);
+    const newRawData = loadIndicatorData(indicator);
+    const newPriceData = addIndicatorsToData(newRawData, vixData, spyData);
+    setRawData(newRawData);
+    setPriceData(newPriceData);
+    // Keep the same currentIndex to maintain the same date
+    setIsPlaying(false);
+  };
+
+  // Handle return to stock chart
+  const handleReturnToStock = () => {
+    setIndicatorSymbol(null); // Return to stock view
+    const newRawData = loadDataForSymbol(symbol);
+    const newPriceData = addIndicatorsToData(newRawData, vixData, spyData);
+    setRawData(newRawData);
+    setPriceData(newPriceData);
+    setIsPlaying(false);
   };
 
   // Trading state
@@ -288,7 +389,7 @@ function App() {
       entryPrice: tradeData.price,
       entryDate: currentDate,
       entryStockPrice: currentPrice,
-      volatility: currentIV, // Use current IV at time of trade
+      volatility: currentIVForOptions, // Use current IV at time of trade (from original stock data)
       riskFreeRate: currentRiskFreeRate
     };
 
@@ -337,7 +438,7 @@ function App() {
               entryPrice: tradeData.price,
               entryDate: currentDate,
               entryStockPrice: currentPrice,
-              volatility: currentIV,
+              volatility: currentIVForOptions,
               riskFreeRate: currentRiskFreeRate
             };
           } else {
@@ -355,7 +456,7 @@ function App() {
           entryPrice: tradeData.price,
           entryDate: currentDate,
           entryStockPrice: currentPrice,
-          volatility: currentIV,
+          volatility: currentIVForOptions,
           riskFreeRate: currentRiskFreeRate
         };
       }
@@ -379,7 +480,7 @@ function App() {
       const daysToExpiry = Math.max(0, Math.floor((expiryDate - currentDateObj) / (1000 * 60 * 60 * 24)));
 
       metrics = calculateOptionPnL(
-        { ...positionToClose, daysToExpiry, volatility: currentIV },
+        { ...positionToClose, daysToExpiry, volatility: currentIVForOptions },
         currentPrice,
         currentDate
       );
@@ -441,18 +542,48 @@ function App() {
           </select>
         </div>
         <div className="stock-info">
-          <span className="price">${currentPrice.toFixed(2)}</span>
+          <span
+            className="price clickable-indicator"
+            onClick={() => handleReturnToStock()}
+            title="Click to return to stock chart"
+          >
+            ${currentPrice.toFixed(2)}
+          </span>
           {currentVIX !== null && (
-            <span className="indicator vix">VIX: {currentVIX.toFixed(2)}</span>
+            <span
+              className="indicator vix clickable-indicator"
+              onClick={() => handleIndicatorChange('VIX')}
+              title="Click to view VIX on chart"
+            >
+              VIX: {currentVIX.toFixed(2)}
+            </span>
           )}
           {currentSPY !== null && (
-            <span className="indicator spy">SPY: {currentSPY.toFixed(2)}</span>
+            <span
+              className="indicator spy clickable-indicator"
+              onClick={() => handleIndicatorChange('SPY')}
+              title="Click to view SPY on chart"
+            >
+              SPY: {currentSPY.toFixed(2)}
+            </span>
           )}
           {currentTnx !== null && (
-            <span className="indicator tnx">TNX: {(currentRiskFreeRate * 100).toFixed(2)}%</span>
+            <span
+              className="indicator tnx clickable-indicator"
+              onClick={() => handleIndicatorChange('TNX')}
+              title="Click to view TNX on chart"
+            >
+              TNX: {(currentRiskFreeRate * 100).toFixed(2)}%
+            </span>
           )}
-          {currentIVRank !== null && (
-            <span className={`indicator iv-rank ${currentIVRank >= 0.5 ? 'iv-high' : 'iv-low'}`} title={`IV Rank: ${(currentIVRank * 100).toFixed(0)}% - Measures where current IV stands relative to the past year (0% = lowest, 100% = highest)`}>IVR: {(currentIVRank * 100).toFixed(0)}%</span>
+          {currentIVRankValue !== null && (
+            <span
+              className={`indicator iv-rank clickable-indicator ${currentIVRankValue >= 0.5 ? 'iv-high' : 'iv-low'}`}
+              onClick={() => handleIndicatorChange('IVR')}
+              title={`IV Rank: ${(currentIVRankValue * 100).toFixed(0)}% - Measures where current IV stands relative to the past year (0% = lowest, 100% = highest). Click to view IVR on chart`}
+            >
+              IVR: {(currentIVRankValue * 100).toFixed(0)}%
+            </span>
           )}
         </div>
       </header>
@@ -485,7 +616,7 @@ function App() {
             <div className="right-panel">
               <OptionsChain
                 currentPrice={currentPrice}
-                currentIV={currentIV}
+                currentIV={currentIVForOptions}
                 strikes={strikes}
                 expirations={expirations}
                 selectedExpiration={selectedExpiration}
@@ -500,7 +631,7 @@ function App() {
                 stockPosition={stockPosition}
                 currentPrice={currentPrice}
                 currentDate={currentDate}
-                currentIV={currentIV}
+                currentIV={currentIVForOptions}
                 onClosePosition={handleClosePosition}
                 onCloseStockPosition={handleCloseStockPosition}
                 closedPositions={closedPositions}

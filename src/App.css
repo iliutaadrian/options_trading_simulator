@@ -131,6 +131,17 @@ body {
   background: rgba(85, 170, 255, 0.15);
 }
 
+.clickable-indicator {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.stock-info .indicator.clickable-indicator:hover {
+  background: rgba(74, 85, 104, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
 .stock-info .date {
   font-size: 1rem;
   color: #888;
