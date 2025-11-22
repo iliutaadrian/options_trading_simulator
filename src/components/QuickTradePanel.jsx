@@ -20,16 +20,21 @@ const QuickTradePanel = ({
 
   const expiration = expirations.find(exp => exp.date === selectedExpiration);
   const atmIndex = strikes.findIndex(strike => strike >= currentPrice);
-  const nearbyStrikes = strikes.slice(Math.max(0, atmIndex - 8), atmIndex + 9); // Show 17 strikes instead of 11
+  const nearbyStrikes = strikes.slice(Math.max(0, atmIndex - 15), atmIndex + 16); // Show 31 strikes instead of 17
 
   // Initialize focused index to ATM
   React.useEffect(() => {
-    setFocusedStrikeIndex(Math.min(8, nearbyStrikes.length - 1));
+    setFocusedStrikeIndex(Math.min(15, nearbyStrikes.length - 1));
   }, [currentPrice, nearbyStrikes.length]);
 
   const [contracts, setContracts] = useState(10);
   const [stockQuantity, setStockQuantity] = useState(100);
   const [customStockPrice, setCustomStockPrice] = useState(currentPrice);
+
+  // Update custom stock price when current price changes
+  React.useEffect(() => {
+    setCustomStockPrice(currentPrice);
+  }, [currentPrice]);
 
   const handleSwipe = (direction, strike) => {
     const optionData = calculateOptionMetrics(
