@@ -26,7 +26,7 @@ if ('serviceWorker' in navigator) {
 
 function App() {
   // Mobile state
-  const [activeTab, setActiveTab] = useState('trade');
+  const [activeTab, setActiveTab] = useState('chart');
   const [showStockSelector, setShowStockSelector] = useState(false);
   const [showTradeAnimation, setShowTradeAnimation] = useState(false);
   const [lastTradeType, setLastTradeType] = useState('buy');
