@@ -228,12 +228,30 @@ const StrikeCard = ({
     ({ down, movement: [mx], velocity: [vx], direction: [dx] }) => {
       if (swiped) return;
 
-      const trigger = Math.abs(mx) > 100 || Math.abs(vx) > 0.5;
+      // More robust swipe detection
+      // Require both sufficient movement AND velocity to trigger swipe
+      const movementThreshold = 70;  // Minimum movement in pixels
+      const velocityThreshold = 0.3; // Minimum velocity (px/ms)
+      const minVelocity = 0.1;       // Minimum velocity to allow shorter movement
+
+      // Check if user has moved far enough regardless of velocity
+      const hasEnoughMovement = Math.abs(mx) > movementThreshold;
+
+      // Check if user has sufficient velocity
+      const hasEnoughVelocity = Math.abs(vx) > velocityThreshold;
+
+      // For shorter movements, require higher velocity
+      const hasMinVelocity = Math.abs(vx) > minVelocity;
+
+      // Trigger swipe if either movement threshold is met with minimal velocity
+      // OR movement is shorter but velocity is high enough
+      const trigger = (hasEnoughMovement && hasMinVelocity) || (Math.abs(mx) > 30 && hasEnoughVelocity);
 
       if (!down && trigger) {
-        const direction = dx > 0 ? 'right' : 'left';
+        // Verify the direction is consistent with movement
+        const direction = mx > 0 ? 'right' : 'left';
         setSwiped(true);
-        api.start({ x: dx > 0 ? 300 : -300 });
+        api.start({ x: mx > 0 ? 300 : -300 });
         setTimeout(() => {
           onSwipe(direction);
           api.start({ x: 0 });
@@ -243,7 +261,7 @@ const StrikeCard = ({
         api.start({ x: down ? mx : 0, immediate: down });
       }
     },
-    { axis: 'x' }
+    { axis: 'x', filterTaps: true } // Filter out quick taps to avoid accidental swipes
   );
 
   return (
@@ -290,13 +308,13 @@ const StrikeCard = ({
 
       <animated.div
         className="swipe-indicator left"
-        style={{ opacity: x.to(v => Math.max(0, -v / 100)) }}
+        style={{ opacity: x.to(v => Math.max(0, Math.min(1, -v / 200))) }}
       >
         SELL
       </animated.div>
       <animated.div
         className="swipe-indicator right"
-        style={{ opacity: x.to(v => Math.max(0, v / 100)) }}
+        style={{ opacity: x.to(v => Math.max(0, Math.min(1, v / 200))) }}
       >
         BUY
       </animated.div>

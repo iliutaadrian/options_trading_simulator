@@ -67,7 +67,7 @@ const PortfolioWidget = ({
         <div className="widget-summary-right">
           <span className="account-balance">
             <div className="balance-label">Balance</div>
-            <div className="balance-value">${(10000 + totalPnL).toFixed(2)}</div>
+            <div className="balance-value">${(50000 + totalPnL).toFixed(2)}</div>
           </span>
           <span className={`total-pnl ${totalPnL >= 0 ? 'profit' : 'loss'}`}>
             {totalPnL >= 0 ? '+' : ''}${totalPnL.toFixed(2)}
