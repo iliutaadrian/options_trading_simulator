@@ -138,7 +138,7 @@ const QuickTradePanel = ({
               min="0.01"
               step="0.01"
               value={customStockPrice}
-              onChange={(e) => setCustomStockPrice(parseFloat(e.target.value) || 0)}
+              onChange={(e) => setCustomStockPrice(parseFloat(e.target.value) || currentPrice)}
               placeholder={currentPrice.toFixed(2)}
             />
           </div>
